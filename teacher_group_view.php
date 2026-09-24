@@ -24,7 +24,7 @@ $allGroups = [
             ['name' => 'Vinutha H K',    'role' => 'QA',       'status' => 'green', 'task' => 'Test scripts',  'percent' => 95],
             ['name' => 'Vinaya kumar',   'role' => 'DevOps',   'status' => 'green', 'task' => 'Deployment',    'percent' => 95],
         ],
-        'escalations' => []
+        'pendingIssues' => []
     ],
     14 => [
         'name' => 'Library Management system',
@@ -34,7 +34,7 @@ $allGroups = [
             ['name' => 'Siddharth', 'role' => 'Frontend', 'status' => 'green', 'task' => 'Search UI', 'percent' => 92],
             ['name' => 'Suhass',    'role' => 'DBA',      'status' => 'amber', 'task' => 'Schema',   'percent' => 89],
         ],
-        'escalations' => [['who' => 'Suhass', 'issue' => 'Needs review on schema', 'severity' => 'amber']]
+        'pendingIssues' => [['who' => 'Suhass', 'issue' => 'Needs review on schema', 'severity' => 'amber']]
     ],
     16 => [
         'name' => 'Placement management system',
@@ -44,7 +44,7 @@ $allGroups = [
             ['name' => 'Shivani Kumari', 'role' => 'Backend',   'status' => 'amber', 'task' => 'Email alerts',   'percent' => 75],
             ['name' => 'Sushmita C M',   'role' => 'Frontend',  'status' => 'green', 'task' => 'Admin Panel',    'percent' => 74],
         ],
-        'escalations' => [['who' => 'Shivani Kumari', 'issue' => 'SMTP server blocked', 'severity' => 'amber']]
+        'pendingIssues' => [['who' => 'Shivani Kumari', 'issue' => 'SMTP server blocked', 'severity' => 'amber']]
     ],
     15 => [
         'name' => 'Hostel Management System',
@@ -54,7 +54,7 @@ $allGroups = [
             ['name' => 'Saquib',  'role' => 'Frontend','status' => 'red',   'task' => 'Mess Fee UI',         'percent' => 45],
             ['name' => 'Raiyaan', 'role' => 'QA',      'status' => 'green', 'task' => 'Test Cases',          'percent' => 70],
         ],
-        'escalations' => [['who' => 'Saquib', 'issue' => 'Blocked on UI mockups', 'severity' => 'red']]
+        'pendingIssues' => [['who' => 'Saquib', 'issue' => 'Blocked on UI mockups', 'severity' => 'red']]
     ],
     17 => [
         'name' => 'Vehicle parking management System',
@@ -65,7 +65,7 @@ $allGroups = [
             ['name' => 'Sudiksha D', 'role' => 'Frontend', 'status' => 'amber','task' => 'Slot UI',     'percent' => 55],
             ['name' => 'Sneha S.',   'role' => 'QA',       'status' => 'amber','task' => 'Testing',     'percent' => 55],
         ],
-        'escalations' => [['who' => 'Shodhan R', 'issue' => 'RFID module defective', 'severity' => 'red']]
+        'pendingIssues' => [['who' => 'Shodhan R', 'issue' => 'RFID module defective', 'severity' => 'red']]
     ],
     18 => [
         'name' => 'Hospital Management System',
@@ -76,7 +76,7 @@ $allGroups = [
             ['name' => 'Prashanth',  'role' => 'Mobile',   'status' => 'red', 'task' => 'App Setup',  'percent' => 30],
             ['name' => 'Shreyas',    'role' => 'QA',       'status' => 'amber','task' => 'Test Plan',  'percent' => 35],
         ],
-        'escalations' => [['who' => 'Vinay G S', 'issue' => 'Needs help with HIPAA compliance', 'severity' => 'red']]
+        'pendingIssues' => [['who' => 'Vinay G S', 'issue' => 'Needs help with HIPAA compliance', 'severity' => 'red']]
     ]
 ];
 
@@ -88,7 +88,7 @@ $groupData = $allGroups[$groupId];
 $projectName = $groupData['name'];
 $guideName = $groupData['guide'];
 $teamRoster = $groupData['roster'];
-$escalations = $groupData['escalations'];
+$pendingIssues = $groupData['pendingIssues'];
 $feedEvents = [];
 if (count($teamRoster) > 0) {
     $feedEvents[] = ['time' => '1 hr ago', 'icon' => 'fa-upload text-accent', 'text' => "<span class='font-semibold'>{$teamRoster[0]['name']}</span> pushed 3 commits to <span class='font-mono'>main</span>"];
@@ -96,15 +96,15 @@ if (count($teamRoster) > 0) {
 if (count($teamRoster) > 1) {
     $feedEvents[] = ['time' => '3 hrs ago', 'icon' => 'fa-check text-accent', 'text' => "<span class='font-semibold'>{$teamRoster[1]['name']}</span> completed task: {$teamRoster[1]['task']}"];
 }
-if (count($escalations) > 0) {
-    $feedEvents[] = ['time' => 'Yesterday', 'icon' => 'fa-triangle-exclamation text-danger', 'text' => "<span class='font-semibold'>{$escalations[0]['who']}</span> opened a blocker: {$escalations[0]['issue']}"];
+if (count($pendingIssues) > 0) {
+    $feedEvents[] = ['time' => 'Yesterday', 'icon' => 'fa-triangle-exclamation text-danger', 'text' => "<span class='font-semibold'>{$pendingIssues[0]['who']}</span> reported an issue: {$pendingIssues[0]['issue']}"];
 } elseif (count($teamRoster) > 2) {
     $feedEvents[] = ['time' => 'Yesterday', 'icon' => 'fa-comment text-accent', 'text' => "<span class='font-semibold'>{$teamRoster[2]['name']}</span> commented on the PR."];
 }
 
-$blockerCount = count(array_filter($teamRoster, fn($m) => $m['status'] === 'red'));
+$issueCount = count(array_filter($teamRoster, fn($m) => $m['status'] === 'red'));
 $onTrackCount = count(array_filter($teamRoster, fn($m) => $m['status'] !== 'red'));
-$avgVelocity = (int) round(array_sum(array_column($teamRoster, 'percent')) / count($teamRoster));
+$avgProgress = (int) round(array_sum(array_column($teamRoster, 'percent')) / count($teamRoster));
 $Deadline = 5;
 
 $heatmapWeeks = 10;
@@ -170,16 +170,16 @@ function heat_level($count) {
         <div class="lg:col-span-3 flex flex-col h-full gap-4">
             <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
                 <div class="card stat-tile tone-red p-4">
-                    <div class="stat-num text-3xl"><?php echo $blockerCount; ?></div>
-                    <div class="text-xs text-muted-ui mt-1">blockers open</div>
+                    <div class="stat-num text-3xl"><?php echo $issueCount; ?></div>
+                    <div class="text-xs text-muted-ui mt-1">open issues</div>
                 </div>
                 <div class="card stat-tile tone-green p-4">
                     <div class="stat-num text-3xl"><?php echo $onTrackCount; ?>/<?php echo count($teamRoster); ?></div>
                     <div class="text-xs text-muted-ui mt-1">students active</div>
                 </div>
                 <div class="card stat-tile tone-amber p-4">
-                    <div class="stat-num text-3xl"><?php echo $avgVelocity; ?>%</div>
-                    <div class="text-xs text-muted-ui mt-1">average velocity</div>
+                    <div class="stat-num text-3xl"><?php echo $avgProgress; ?>%</div>
+                    <div class="text-xs text-muted-ui mt-1">average progress</div>
                 </div>
                 <div class="card stat-tile p-4">
                     <div class="stat-num text-3xl"><?php echo $Deadline; ?></div>
@@ -213,10 +213,10 @@ function heat_level($count) {
             </div>
             
             <div class="card p-5">
-                <h3 class="font-head font-semibold mb-3 text-danger"><i class="fas fa-triangle-exclamation mr-2"></i>Active Escalations</h3>
-                <?php if (count($escalations) > 0): ?>
+                <h3 class="font-head font-semibold mb-3 text-danger"><i class="fas fa-triangle-exclamation mr-2"></i>Pending Issues</h3>
+                <?php if (count($pendingIssues) > 0): ?>
                 <ul class="text-sm space-y-2">
-                    <?php foreach ($escalations as $e): ?>
+                    <?php foreach ($pendingIssues as $e): ?>
                         <li class="flex items-center gap-2">
                             <span class="font-semibold"><?php echo htmlspecialchars($e['who']); ?>:</span>
                             <span class="text-muted-ui"><?php echo htmlspecialchars($e['issue']); ?></span>
@@ -226,7 +226,7 @@ function heat_level($count) {
                 <?php else: ?>
                 <div class="flex items-center gap-2 text-sm" style="color: var(--accent);">
                     <i class="fas fa-check-circle"></i>
-                    <span>No active escalations. The team is unblocked.</span>
+                    <span>No pending issues. The team is progressing.</span>
                 </div>
                 <?php endif; ?>
             </div>
@@ -311,3 +311,4 @@ echo json_encode($colors);
     </script>
 </body>
 </html>
+

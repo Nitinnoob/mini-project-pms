@@ -18,8 +18,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     try {
         $pdo->beginTransaction();
         
-        $stmt = $pdo->prepare("INSERT INTO classrooms (name, created_by) VALUES (?, ?)");
-        $stmt->execute([$title, $_SESSION['user_id']]);
+        $invite_code = substr(str_shuffle('0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ'), 0, 6);
+        $stmt = $pdo->prepare("INSERT INTO classrooms (name, created_by, invite_code) VALUES (?, ?, ?)");
+        $stmt->execute([$title, $_SESSION['user_id'], $invite_code]);
         
         // Fetch the ID of the classroom just created
         $stmt2 = $pdo->prepare("SELECT MAX(id) as id FROM classrooms WHERE created_by = ?");
@@ -85,11 +86,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     <input type="text" name="classroom_name" class="form-input" placeholder="e.g. 5th Sem CS Mini-Projects" required>
                 </div>
 
-                <div>
-                    <label class="block text-sm font-semibold mb-2">Generate Invite Code</label>
-                    <p class="text-xs mb-2" style="color: var(--muted);">Share this code with your students so they can join automatically.</p>
-                    <input type="text" name="invite_code" value="RGIT-CS-B" class="form-input code-input" readonly>
-                </div>
+
 
                 <div class="flex justify-end gap-3 pt-6 border-t border-ui mt-8">
                     <a href="dashboard.php" class="px-6 py-2 text-sm font-semibold transition" style="color: var(--muted);">Cancel</a>
@@ -105,6 +102,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <div id="successOverlay" class="success-overlay <?php echo $successMessage ? 'show' : ''; ?>">
         <i class="fas fa-check-circle text-6xl mb-6 success-icon" style="color: var(--accent-2);"></i>
         <h2 class="text-3xl font-bold mb-2 font-head success-icon" style="animation-delay: 0.1s;">Classroom Created!</h2>
+        <p class="text-xl font-mono-ui success-icon mb-4" style="color: var(--accent); animation-delay: 0.15s;">Invite Code: <?php echo htmlspecialchars($invite_code ?? ''); ?></p>
         <p class="text-muted-ui success-icon" style="animation-delay: 0.2s;">Redirecting to your new dashboard...</p>
     </div>
 
@@ -112,8 +110,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <?php if ($successMessage): ?>
         // Simulate redirect after success animation
         setTimeout(() => {
-            window.location.href = 'dashboard.php';
-        }, 2500);
+            window.location.href = 'dashboard.php?classroom_id=<?php echo urlencode($classroom_id); ?>';
+        }, 5000);
         <?php endif; ?>
     </script>
 </body>

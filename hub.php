@@ -85,7 +85,7 @@ foreach ($workspaces as $row) {
 
         <h3 class="text-lg font-semibold mb-4 border-b pb-2" style="border-color: var(--border);">Preview the UI</h3>
         <p class="text-sm mb-4" style="color: var(--muted);">For demo/presentation purposes — jump straight into either role's dashboard with sample data, no classroom or project setup required.</p>
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-10">
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
             <a href="dashboard.php?classroom_id=demo&demo_view=Student" class="card block p-6" style="border-style: dashed;">
                 <div class="flex justify-between items-start mb-4">
                     <div class="p-3 rounded-lg" style="background: var(--bg-raised);">
@@ -109,6 +109,18 @@ foreach ($workspaces as $row) {
                 </div>
                 <h4 class="text-xl font-bold mb-1">Project Leader View</h4>
                 <p class="text-sm" style="color: var(--muted);">Same board, plus pending requests, team roster, and invite management.</p>
+            </a>
+            <a href="dashboard.php?classroom_id=demo&demo_view=Teacher" class="card block p-6" style="border-style: dashed;">
+                <div class="flex justify-between items-start mb-4">
+                    <div class="p-3 rounded-lg" style="background: var(--bg-raised);">
+                        <i class="fas fa-chalkboard-teacher text-xl" style="color: var(--accent);"></i>
+                    </div>
+                    <span class="text-xs font-semibold px-2 py-1 rounded" style="background: var(--bg-raised); color: var(--muted); border: 1px solid var(--border);">
+                        Demo
+                    </span>
+                </div>
+                <h4 class="text-xl font-bold mb-1">Teacher View</h4>
+                <p class="text-sm" style="color: var(--muted);">Macro view of all groups, overall completion, and risk status.</p>
             </a>
         </div>
 

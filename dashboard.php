@@ -189,54 +189,91 @@ if ($progressPercent === 0) {
     $progressWord = 'on pace for Friday';
 }
 
+if ($isDemo) {
 // 2. Calendar data (Student layout) — current month, demo tasks pinned to days
-$today = new DateTime();
-$daysInMonth = (int) $today->format('t');
-$firstOfMonth = new DateTime($today->format('Y-m-01'));
-$startWeekday = (int) $firstOfMonth->format('N'); // 1 = Monday ... 7 = Sunday
-$todayNum = (int) $today->format('j');
-$monthLabel = $today->format('F Y');
+    $today = new DateTime();
+    $daysInMonth = (int) $today->format('t');
+    $firstOfMonth = new DateTime($today->format('Y-m-01'));
+    $startWeekday = (int) $firstOfMonth->format('N'); // 1 = Monday ... 7 = Sunday
+    $todayNum = (int) $today->format('j');
+    $monthLabel = $today->format('F Y');
+    
+    $calendarTasksRaw = [
+        5  => ['title' => 'DB schema review',    'priority' => 'high'],
+        9  => ['title' => 'Team sync',            'priority' => 'normal'],
+        $todayNum + 1 => ['title' => 'Phase 1 report due', 'priority' => 'high'],
+        $todayNum + 5 => ['title' => 'Phase Review',         'priority' => 'normal'],
+    ];
+    $calendarTasks = [];
+    foreach ($calendarTasksRaw as $day => $task) {
+        $calendarTasks[min($day, $daysInMonth)][] = $task;
+    }
+    $calendarTasks[$todayNum][] = ['title' => 'Architecture review', 'priority' => 'high'];
+    
+    // 3. Team roster (Project Leader layout) — member-level status
+    $teamRoster = [
+        ['name' => 'Nithin gowda',   'role' => 'Backend',  'status' => 'green', 'task' => 'Schema Design', 'percent' => 96],
+        ['name' => 'Ranjith kumar',  'role' => 'Frontend', 'status' => 'green', 'task' => 'Dashboard UI',  'percent' => 98],
+        ['name' => 'Vinutha H K',    'role' => 'QA',       'status' => 'green', 'task' => 'Test scripts',  'percent' => 95],
+        ['name' => 'Vinaya kumar',   'role' => 'DevOps',   'status' => 'green', 'task' => 'Deployment',    'percent' => 95],
+    ];
+    
+    $issueCount = count(array_filter($teamRoster, fn($m) => $m['status'] === 'red'));
+    $onTrackCount = count(array_filter($teamRoster, fn($m) => $m['status'] !== 'red'));
+    $avgProgress = (int) round(array_sum(array_column($teamRoster, 'percent')) / count($teamRoster));
+    $daysToDeadline = 3;
+    
+    // 4. Project groups (Teacher layout) — group-level ledger
+    $mockProjectGroupsRaw = [
+        ['id' => 23, 'name' => 'Group 23 — Project management system', 'members' => 4, 'percent' => 96, 'desc' => 'A comprehensive platform for students to manage mini-projects, track milestones, and communicate with their guides asynchronously.', 'member_names' => ['Ranjith kumar', 'Nithin gowda', 'Vinutha H K', 'Vinaya kumar']],
+        ['id' => 14, 'name' => 'Group 14 — Library Management system', 'members' => 3, 'percent' => 92, 'desc' => 'A digital solution for campus library book tracking, issuing, and automated fine calculation.', 'member_names' => ['Twayib', 'Siddharth', 'Suhass']],
+        ['id' => 16, 'name' => 'Group 16 — Placement management system',  'members' => 3, 'percent' => 78, 'desc' => 'Web portal to track upcoming campus drives, student eligibility, and interview schedules.', 'member_names' => ['Varshini G', 'Shivani Kumari', 'Sushmita C M']],
+        ['id' => 15, 'name' => 'Group 15 — Hostel Management System',        'members' => 3, 'percent' => 60, 'desc' => 'Platform for room allocation, mess fee tracking, and hostel complaint logging.', 'member_names' => ['Sameer', 'Saquib', 'Raiyaan']],
+        ['id' => 17, 'name' => 'Group 17 — Vehicle parking management System', 'members' => 4, 'percent' => 45, 'desc' => 'Automated parking slot allocation and campus entry tracking using RFID.', 'member_names' => ['Shodhan R', 'Prajwal', 'Sudiksha D', 'Sneha Sanjeev Mayannavar']],
+        ['id' => 18, 'name' => 'Group 18 — Hospital Management System',       'members' => 4, 'percent' => 30, 'desc' => 'Centralized patient record management, appointment booking, and inventory system.', 'member_names' => ['Vinay kumar G S', 'Pavan kalli', 'Prashanth K S', 'Shreyas']],
+    ];
+    $projectGroups = []; // Starts empty for the live animation demo
+    
+    // 5. Contribution heatmap (10 weeks x 7 days, fixed demo pattern)
+    $heatmapWeeks = 10;
+    $heatmapPattern = [0, 1, 3, 2, 4, 1, 0, 2, 3, 1, 0, 0, 2, 4, 3, 1, 0, 1, 2, 3, 4, 2, 0, 1, 3, 2, 1, 0, 0, 2, 3, 4, 1, 2, 0, 1, 3, 2, 4, 1, 0, 0, 2, 3, 1, 2, 4, 3, 1, 0, 2, 1, 0, 3, 2, 4, 1, 0, 2, 3, 1, 0, 4, 2, 3, 1, 0, 2, 1, 0];
+    
+    } else {
+    // 2. Calendar data (Empty for real DB mode until Phase 2)
+    $today = new DateTime();
+    $daysInMonth = (int) $today->format('t');
+    $firstOfMonth = new DateTime($today->format('Y-m-01'));
+    $startWeekday = (int) $firstOfMonth->format('N');
+    $todayNum = (int) $today->format('j');
+    $monthLabel = $today->format('F Y');
+    $calendarTasks = [];
 
-$calendarTasksRaw = [
-    5  => ['title' => 'DB schema review',    'priority' => 'high'],
-    9  => ['title' => 'Team sync',            'priority' => 'normal'],
-    $todayNum + 1 => ['title' => 'Phase 1 report due', 'priority' => 'high'],
-    $todayNum + 5 => ['title' => 'Sprint retro',         'priority' => 'normal'],
-];
-$calendarTasks = [];
-foreach ($calendarTasksRaw as $day => $task) {
-    $calendarTasks[min($day, $daysInMonth)][] = $task;
+    // 3. Team roster (Real DB mode)
+    $teamRoster = [];
+    if (!empty($actualTeamRoster)) {
+        foreach ($actualTeamRoster as $member) {
+            $teamRoster[] = [
+                'name' => $member['USERNAME'],
+                'role' => 'Member',
+                'status' => 'green',
+                'task' => 'No task assigned',
+                'percent' => 0
+            ];
+        }
+    }
+    $issueCount = 0;
+    $onTrackCount = count($teamRoster);
+    $avgProgress = 0;
+    $daysToDeadline = 3;
+
+    // 4. Project groups
+    $mockProjectGroupsRaw = [];
+    $projectGroups = [];
+
+    // 5. Contribution heatmap
+    $heatmapWeeks = 10;
+    $heatmapPattern = array_fill(0, 70, 0);
 }
-$calendarTasks[$todayNum][] = ['title' => 'Architecture review', 'priority' => 'high'];
-
-// 3. Team roster (Project Leader layout) — member-level status
-$teamRoster = [
-    ['name' => 'Nithin gowda',   'role' => 'Backend',  'status' => 'green', 'task' => 'Schema Design', 'percent' => 96],
-    ['name' => 'Ranjith kumar',  'role' => 'Frontend', 'status' => 'green', 'task' => 'Dashboard UI',  'percent' => 98],
-    ['name' => 'Vinutha H K',    'role' => 'QA',       'status' => 'green', 'task' => 'Test scripts',  'percent' => 95],
-    ['name' => 'Vinaya kumar',   'role' => 'DevOps',   'status' => 'green', 'task' => 'Deployment',    'percent' => 95],
-];
-
-$blockerCount = count(array_filter($teamRoster, fn($m) => $m['status'] === 'red'));
-$onTrackCount = count(array_filter($teamRoster, fn($m) => $m['status'] !== 'red'));
-$avgVelocity = (int) round(array_sum(array_column($teamRoster, 'percent')) / count($teamRoster));
-$daysToDeadline = 3;
-
-// 4. Project groups (Teacher layout) — group-level ledger
-$mockProjectGroupsRaw = [
-    ['id' => 23, 'name' => 'Group 23 — Project management system', 'members' => 4, 'percent' => 96, 'desc' => 'A comprehensive platform for students to manage mini-projects, track milestones, and communicate with their guides asynchronously.', 'member_names' => ['Ranjith kumar', 'Nithin gowda', 'Vinutha H K', 'Vinaya kumar']],
-    ['id' => 14, 'name' => 'Group 14 — Library Management system', 'members' => 3, 'percent' => 92, 'desc' => 'A digital solution for campus library book tracking, issuing, and automated fine calculation.', 'member_names' => ['Twayib', 'Siddharth', 'Suhass']],
-    ['id' => 16, 'name' => 'Group 16 — Placement management system',  'members' => 3, 'percent' => 78, 'desc' => 'Web portal to track upcoming campus drives, student eligibility, and interview schedules.', 'member_names' => ['Varshini G', 'Shivani Kumari', 'Sushmita C M']],
-    ['id' => 15, 'name' => 'Group 15 — Hostel Management System',        'members' => 3, 'percent' => 60, 'desc' => 'Platform for room allocation, mess fee tracking, and hostel complaint logging.', 'member_names' => ['Sameer', 'Saquib', 'Raiyaan']],
-    ['id' => 17, 'name' => 'Group 17 — Vehicle parking management System', 'members' => 4, 'percent' => 45, 'desc' => 'Automated parking slot allocation and campus entry tracking using RFID.', 'member_names' => ['Shodhan R', 'Prajwal', 'Sudiksha D', 'Sneha Sanjeev Mayannavar']],
-    ['id' => 18, 'name' => 'Group 18 — Hospital Management System',       'members' => 4, 'percent' => 30, 'desc' => 'Centralized patient record management, appointment booking, and inventory system.', 'member_names' => ['Vinay kumar G S', 'Pavan kalli', 'Prashanth K S', 'Shreyas']],
-];
-$projectGroups = []; // Starts empty for the live animation demo
-
-// 5. Contribution heatmap (10 weeks x 7 days, fixed demo pattern)
-$heatmapWeeks = 10;
-$heatmapPattern = [0, 1, 3, 2, 4, 1, 0, 2, 3, 1, 0, 0, 2, 4, 3, 1, 0, 1, 2, 3, 4, 2, 0, 1, 3, 2, 1, 0, 0, 2, 3, 4, 1, 2, 0, 1, 3, 2, 4, 1, 0, 0, 2, 3, 1, 2, 4, 3, 1, 0, 2, 1, 0, 3, 2, 4, 1, 0, 2, 3, 1, 0, 4, 2, 3, 1, 0, 2, 1, 0];
-
 function heat_level($count)
 {
     if ($count <= 0) return 0;
@@ -330,7 +367,7 @@ function heat_level($count)
                         <i class="fas fa-magic me-2"></i>Generate Friday wrap-up
                     </button>
                     <button class="btn-ui text-sm font-semibold px-4 py-2 text-danger" style="background: transparent;">
-                        <i class="fas fa-exclamation-triangle me-2"></i>Escalation flare
+                        <i class="fas fa-exclamation-triangle me-2"></i>Report Issue
                     </button>
                 </div>
             </div>
@@ -485,7 +522,7 @@ function heat_level($count)
 
             <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
                 <div class="card stat-tile tone-red p-4">
-                    <div class="stat-num text-3xl"><?php echo $blockerCount; ?></div>
+                    <div class="stat-num text-3xl"><?php echo $issueCount; ?></div>
                     <div class="text-xs text-muted-ui mt-1">pending issues</div>
                 </div>
                 <div class="card stat-tile tone-green p-4">
@@ -493,7 +530,7 @@ function heat_level($count)
                     <div class="text-xs text-muted-ui mt-1">members active</div>
                 </div>
                 <div class="card stat-tile tone-amber p-4">
-                    <div class="stat-num text-3xl"><?php echo $avgVelocity; ?>%</div>
+                    <div class="stat-num text-3xl"><?php echo $avgProgress; ?>%</div>
                     <div class="text-xs text-muted-ui mt-1">overall completion</div>
                 </div>
                 <div class="card stat-tile p-4">
@@ -520,7 +557,7 @@ function heat_level($count)
                             <i class="fas fa-magic me-2"></i>Generate Friday wrap-up
                         </button>
                         <button class="btn-ui text-sm font-semibold px-4 py-2 text-danger" style="background: transparent;">
-                            <i class="fas fa-exclamation-triangle me-2"></i>Escalation flare
+                            <i class="fas fa-exclamation-triangle me-2"></i>Report Issue
                         </button>
                     </div>
                 </div>
@@ -1148,3 +1185,4 @@ function heat_level($count)
 </body>
 
 </html>
+

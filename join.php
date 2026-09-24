@@ -14,34 +14,31 @@ $classroom_id = null;
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $code = trim($_POST['invite_code'] ?? '');
-    if ($code === 'RGIT-CS-B') {
-        // Find or create a demo classroom for this invite code
-        $stmt = $pdo->prepare("SELECT id FROM classrooms WHERE name = 'Section B Demo'");
-        $stmt->execute();
-        $row = $stmt->fetch(PDO::FETCH_ASSOC);
+    $usn = trim(strtoupper($_POST['usn'] ?? ''));
+    
+    $stmt = $pdo->prepare("SELECT id, name FROM classrooms WHERE invite_code = ?");
+    $stmt->execute([$code]);
+    $row = $stmt->fetch(PDO::FETCH_ASSOC);
+    
+    if ($row) {
+        $classroom_id = $row['ID'];
         
-        if ($row) {
-            $classroom_id = $row['ID'];
-        } else {
-            $stmtInsert = $pdo->prepare("INSERT INTO classrooms (name, created_by) VALUES ('Section B Demo', ?)");
-            $stmtInsert->execute([$_SESSION['user_id']]);
-            $stmtFetch = $pdo->prepare("SELECT MAX(id) as id FROM classrooms WHERE name = 'Section B Demo'");
-            $stmtFetch->execute();
-            $rowNew = $stmtFetch->fetch(PDO::FETCH_ASSOC);
-            $classroom_id = $rowNew['ID'];
-        }
-        
-        // Insert user into classroom_members if they aren't already in it
-        $stmtCheck = $pdo->prepare("SELECT 1 FROM classroom_members WHERE classroom_id = ? AND user_id = ?");
+        // Check if already a member
+        $stmtCheck = $pdo->prepare("SELECT role FROM classroom_members WHERE classroom_id = ? AND user_id = ?");
         $stmtCheck->execute([$classroom_id, $_SESSION['user_id']]);
         if (!$stmtCheck->fetch()) {
-            $stmtAdd = $pdo->prepare("INSERT INTO classroom_members (classroom_id, user_id, role) VALUES (?, ?, 'Team Member')");
-            $stmtAdd->execute([$classroom_id, $_SESSION['user_id']]);
+            $stmtJoin = $pdo->prepare("INSERT INTO classroom_members (classroom_id, user_id, role) VALUES (?, ?, 'Team Member')");
+            $stmtJoin->execute([$classroom_id, $_SESSION['user_id']]);
         }
         
+        // Update the user's USN in the users table
+        if (!empty($usn)) {
+            $stmtUsn = $pdo->prepare("UPDATE users SET usn = ? WHERE id = ?");
+            $stmtUsn->execute([$usn, $_SESSION['user_id']]);
+        }
         $successMessage = true;
     } else {
-        $error = 'Invalid invite code. Try RGIT-CS-B for the demo.';
+        $error = 'Invalid invite code. Please check with your teacher.';
     }
 }
 ?>
@@ -86,7 +83,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
             <form method="POST" class="space-y-6">
                 <div>
-                    <input type="text" name="invite_code" value="<?php echo htmlspecialchars($code ?? ''); ?>" class="form-input code-input <?php echo $error ? 'shake' : ''; ?>" placeholder="XXXX-XXXX" required maxlength="12">
+                    <label class="block text-sm font-semibold mb-2" style="color: var(--muted);">Classroom Invite Code</label>
+                    <input type="text" name="invite_code" value="<?php echo htmlspecialchars($code ?? ''); ?>" class="form-input code-input <?php echo $error ? 'shake' : ''; ?>" placeholder="XXXXXX" required maxlength="12">
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-semibold mb-2" style="color: var(--muted);">Your USN (University Seat Number)</label>
+                    <input type="text" name="usn" class="form-input" placeholder="e.g. 1RG24CS015" required style="width: 100%; padding: 0.75rem; border-radius: var(--radius); background: var(--bg); border: 1px solid var(--border); color: var(--text);">
                 </div>
                 
                 <button type="submit" class="w-full py-3 font-semibold rounded hover:opacity-90 transition" style="background: var(--accent-2); color: var(--bg); border-radius: var(--radius);">
@@ -116,3 +119,4 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     </script>
 </body>
 </html>
+
