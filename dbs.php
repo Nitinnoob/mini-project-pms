@@ -1,9 +1,9 @@
 <?php
 $host = 'localhost';
-$port = '1521';
-$dbname = 'XE'; 
-$user = 'project_admin';
-$pass = 'projectpass123';
+$port = '1521'; //port for oracle database 11g,21c express edition 
+$dbname = 'your_database_name'; //this part needs to be filled by the user
+$user = 'your_db_username';
+$pass = 'your_db_password';
 
 // Oracle-specific connection string (DSN)
 $dsn = "oci:dbname=//{$host}:{$port}/{$dbname};charset=UTF8";
