@@ -1,19 +1,23 @@
 <?php
 $host = 'localhost';
-$port = '1521'; //port for oracle database 11g,21c express edition 
-$dbname = 'your_database_name'; //this part needs to be filled by the user
-$user = 'your_db_username';
-$pass = 'your_db_password';
-
-// Oracle-specific connection string (DSN)
-$dsn = "oci:dbname=//{$host}:{$port}/{$dbname};charset=UTF8";
+$dbname = 'pms'; // Updated generic database name
+$username = 'root'; // XAMPP default
+$password = ''; // XAMPP default is an empty string
 
 try {
-    // Establish a secure PDO connection to Oracle
-    $pdo = new PDO($dsn, $user, $pass);
+    // Connect using the MySQL PDO driver with utf8mb4 encoding
+    $pdo = new PDO("mysql:host=$host;dbname=$dbname;charset=utf8mb4", $username, $password);
+    
+    // Set PDO error mode to exception for easier debugging
     $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-} catch (PDOException $e) {
-    // If it fails, print the Oracle error message
-    die("Oracle Database connection failed: " . $e->getMessage());
+    
+    // Set default fetch mode to associative array
+    $pdo->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_ASSOC);
+    
+    
+    
+} catch(PDOException $e) {
+    die("Database Connection failed. Please ensure XAMPP MySQL is running and the 'pms' database exists. Error: " . $e->getMessage());
 }
 ?>
+

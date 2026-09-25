@@ -33,27 +33,27 @@ if ($isDemo) {
 
     if ($actualView === 'Student' || $actualView === 'Project Leader') {
         $myProject = [
-            'ID' => 9001,
-            'NAME' => 'AI-Powered Analytics (Demo)',
-            'IS_LEADER' => $actualView === 'Project Leader' ? 1 : 0,
-            'JOIN_STATUS' => 'Active',
+            'id' => 9001,
+            'name' => 'AI-Powered Analytics (Demo)',
+            'is_leader' => $actualView === 'Project Leader' ? 1 : 0,
+            'join_status' => 'Active',
         ];
-        $myProjectId = $myProject['ID'];
+        $myProjectId = $myProject['id'];
         $actualTeamRoster = [
-            ['ID' => 1, 'USERNAME' => $_SESSION['username'] ?? 'You', 'IS_LEADER' => $actualView === 'Project Leader' ? 1 : 0],
-            ['ID' => 2, 'USERNAME' => 'Nithin Gowda', 'IS_LEADER' => 0],
+            ['id' => 1, 'username' => $_SESSION['username'] ?? 'You', 'is_leader' => $actualView === 'Project Leader' ? 1 : 0],
+            ['id' => 2, 'username' => 'Nithin Gowda', 'is_leader' => 0],
         ];
         $pendingRequests = $actualView === 'Project Leader'
-            ? [['ID' => 3, 'USERNAME' => 'Vinutha H K']]
+            ? [['id' => 3, 'username' => 'Vinutha H K']]
             : [];
         $unassignedClassmates = [
-            ['ID' => 4, 'USERNAME' => 'Vinaya Kumar'],
-            ['ID' => 5, 'USERNAME' => 'Twayib'],
+            ['id' => 4, 'username' => 'Vinaya Kumar'],
+            ['id' => 5, 'username' => 'Twayib'],
         ];
     } elseif ($actualView === 'Marketplace') {
         $availableProjects = [
-            ['ID' => 991, 'NAME' => 'Library Management System', 'DESCRIPTION' => 'A digital solution for campus library book tracking, issuing, and automated fine calculation.', 'ACTIVE_MEMBERS' => 3, 'MY_STATUS' => 'None'],
-            ['ID' => 992, 'NAME' => 'Hostel Management System', 'DESCRIPTION' => 'Platform for room allocation, mess fee tracking, and hostel complaint logging.', 'ACTIVE_MEMBERS' => 3, 'MY_STATUS' => 'None'],
+            ['id' => 991, 'name' => 'Library Management System', 'description' => 'A digital solution for campus library book tracking, issuing, and automated fine calculation.', 'active_members' => 3, 'my_status' => 'None'],
+            ['id' => 992, 'name' => 'Hostel Management System', 'description' => 'Platform for room allocation, mess fee tracking, and hostel complaint logging.', 'active_members' => 3, 'my_status' => 'None'],
         ];
     }
     // Teacher view needs no extra variables here — its ledger content is
@@ -77,7 +77,7 @@ if ($isDemo) {
         exit;
     }
 
-    $contextualRole = $member['ROLE'] ?? 'Team Member'; // Admin or Team Member
+    $contextualRole = $member['role'] ?? 'Team Member'; // Admin or Team Member
 
     if ($contextualRole === 'Admin') {
         $actualView = 'Teacher';
@@ -92,9 +92,9 @@ if ($isDemo) {
         $stmtProj->execute([$classroom_id, $_SESSION['user_id']]);
         $myProject = $stmtProj->fetch(PDO::FETCH_ASSOC);
 
-        if ($myProject && $myProject['JOIN_STATUS'] === 'Active') {
-            $actualView = ($myProject['IS_LEADER'] == 1) ? 'Project Leader' : 'Student';
-            $myProjectId = $myProject['ID'];
+        if ($myProject && $myProject['join_status'] === 'Active') {
+            $actualView = ($myProject['is_leader'] == 1) ? 'Project Leader' : 'Student';
+            $myProjectId = $myProject['id'];
             
             if ($actualView === 'Project Leader') {
                 $stmtPending = $pdo->prepare("
@@ -144,11 +144,11 @@ if ($isDemo) {
             
             // Artificial Simulation for Demo: Ensure there are at least 5 projects displayed
             $mockProjectsPool = [
-                ['ID' => 991, 'NAME' => 'Library Management system', 'DESCRIPTION' => 'A digital solution for campus library book tracking, issuing, and automated fine calculation.', 'ACTIVE_MEMBERS' => 3, 'MY_STATUS' => 'None'],
-                ['ID' => 992, 'NAME' => 'Hostel Management System', 'DESCRIPTION' => 'Platform for room allocation, mess fee tracking, and hostel complaint logging.', 'ACTIVE_MEMBERS' => 3, 'MY_STATUS' => 'None'],
-                ['ID' => 993, 'NAME' => 'Placement management system', 'DESCRIPTION' => 'Web portal to track upcoming campus drives, student eligibility, and interview schedules.', 'ACTIVE_MEMBERS' => 3, 'MY_STATUS' => 'Pending'],
-                ['ID' => 994, 'NAME' => 'Vehicle parking management System', 'DESCRIPTION' => 'Automated parking slot allocation and campus entry tracking using RFID.', 'ACTIVE_MEMBERS' => 4, 'MY_STATUS' => 'None'],
-                ['ID' => 995, 'NAME' => 'Hospital Management System', 'DESCRIPTION' => 'Centralized patient record management, appointment booking, and inventory system.', 'ACTIVE_MEMBERS' => 4, 'MY_STATUS' => 'None']
+                ['id' => 991, 'name' => 'Library Management system', 'description' => 'A digital solution for campus library book tracking, issuing, and automated fine calculation.', 'active_members' => 3, 'my_status' => 'None'],
+                ['id' => 992, 'name' => 'Hostel Management System', 'description' => 'Platform for room allocation, mess fee tracking, and hostel complaint logging.', 'active_members' => 3, 'my_status' => 'None'],
+                ['id' => 993, 'name' => 'Placement management system', 'description' => 'Web portal to track upcoming campus drives, student eligibility, and interview schedules.', 'active_members' => 3, 'my_status' => 'Pending'],
+                ['id' => 994, 'name' => 'Vehicle parking management System', 'description' => 'Automated parking slot allocation and campus entry tracking using RFID.', 'active_members' => 4, 'my_status' => 'None'],
+                ['id' => 995, 'name' => 'Hospital Management System', 'description' => 'Centralized patient record management, appointment booking, and inventory system.', 'active_members' => 4, 'my_status' => 'None']
             ];
             
             $currentCount = count($availableProjects);
@@ -165,7 +165,7 @@ $modeSlug = ['Student' => 'student', 'Project Leader' => 'leader', 'Teacher' => 
 
 $headerTitle = "PMS";
 if ($actualView === 'Student' || $actualView === 'Project Leader') {
-    $headerTitle = htmlspecialchars($myProject['NAME'] ?? 'My Project');
+    $headerTitle = htmlspecialchars($myProject['name'] ?? 'My Project');
 } elseif ($actualView === 'Marketplace') {
     $headerTitle = "Available Projects";
 } elseif ($actualView === 'Teacher') {
@@ -174,7 +174,8 @@ if ($actualView === 'Student' || $actualView === 'Project Leader') {
 
 // 1. Global project progress (shown in every layout, styled per mode)
 $isNewlyCreated = ($actualView === 'Student' || $actualView === 'Project Leader') && count($actualTeamRoster ?? []) <= 1;
-$progressPercent = $isNewlyCreated ? 0 : 74;
+if ($isDemo) { $progressPercent = $isNewlyCreated ? 0 : 74; }
+// In real mode, $progressPercent is already calculated dynamically above
 if ($progressPercent === 0) {
     $progressStatus = 'ontrack';
     $progressWord = 'project initialized';
@@ -248,22 +249,57 @@ if ($isDemo) {
     $monthLabel = $today->format('F Y');
     $calendarTasks = [];
 
-    // 3. Team roster (Real DB mode)
-    $teamRoster = [];
-    if (!empty($actualTeamRoster)) {
-        foreach ($actualTeamRoster as $member) {
-            $teamRoster[] = [
-                'name' => $member['USERNAME'],
-                'role' => 'Member',
-                'status' => 'green',
-                'task' => 'No task assigned',
-                'percent' => 0
-            ];
-        }
-    }
+    // 3. Team roster and Tasks (Real DB mode)
+    $tasks = ['todo' => [], 'inprogress' => [], 'done' => []];
+    $totalTasks = 0;
+    $doneTasksCount = 0;
     $issueCount = 0;
+    $pendingIssues = [];
+    $teamRoster = [];
+
+    if (isset($myProjectId)) {
+        $stmtTasks = $pdo->prepare("SELECT t.*, u.username as assignee_name FROM tasks t LEFT JOIN users u ON t.assigned_to = u.id WHERE t.project_id = ? ORDER BY t.created_at DESC");
+        $stmtTasks->execute([$myProjectId]);
+        $allTasks = $stmtTasks->fetchAll(PDO::FETCH_ASSOC);
+
+        foreach ($allTasks as $t) {
+            $tasks[$t['status']][] = $t;
+            $totalTasks++;
+            if ($t['status'] === 'done') $doneTasksCount++;
+        }
+
+        $progressPercent = ($totalTasks > 0) ? (int)round(($doneTasksCount / $totalTasks) * 100) : 0;
+
+        if (!empty($actualTeamRoster)) {
+            foreach ($actualTeamRoster as $member) {
+                $userTasks = 0;
+                $userDone = 0;
+                foreach ($allTasks as $t) {
+                    if ($t['assigned_to'] == $member['id']) {
+                        $userTasks++;
+                        if ($t['status'] === 'done') $userDone++;
+                    }
+                }
+                $userPercent = ($userTasks > 0) ? (int)round(($userDone / $userTasks) * 100) : 0;
+                
+                $teamRoster[] = [
+                    'name' => $member['username'],
+                    'role' => $member['is_leader'] ? 'Leader' : 'Member',
+                    'status' => 'green',
+                    'task' => ($userTasks > 0) ? "$userDone / $userTasks tasks done" : 'No tasks',
+                    'percent' => $userPercent
+                ];
+            }
+        }
+        
+        $stmtIssues = $pdo->prepare("SELECT * FROM issues WHERE project_id = ? AND status = 'open'");
+        $stmtIssues->execute([$myProjectId]);
+        $pendingIssues = $stmtIssues->fetchAll(PDO::FETCH_ASSOC);
+        $issueCount = count($pendingIssues);
+    }
+    
     $onTrackCount = count($teamRoster);
-    $avgProgress = 0;
+    $avgProgress = isset($progressPercent) ? $progressPercent : 0;
     $daysToDeadline = 3;
 
     // 4. Project groups
@@ -482,16 +518,16 @@ function heat_level($count)
             <?php else: ?>
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 <?php foreach ($availableProjects as $proj): 
-                    $isPending = ($proj['MY_STATUS'] === 'Pending');
+                    $isPending = ($proj['my_status'] === 'Pending');
                 ?>
                 <div class="card p-6 flex flex-col hover:border-[color:var(--accent-2)] transition-colors">
-                    <h4 class="text-xl font-bold mb-2 truncate"><?php echo htmlspecialchars($proj['NAME']); ?></h4>
+                    <h4 class="text-xl font-bold mb-2 truncate"><?php echo htmlspecialchars($proj['name']); ?></h4>
                     <p class="text-sm text-muted-ui mb-4 flex-1 overflow-hidden" style="display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical;">
-                        <?php echo htmlspecialchars($proj['DESCRIPTION'] ?: 'No description provided.'); ?>
+                        <?php echo htmlspecialchars($proj['description'] ?: 'No description provided.'); ?>
                     </p>
                     <div class="flex justify-between items-center pt-4 border-t border-ui">
                         <div class="text-xs font-semibold text-muted-ui flex items-center gap-1">
-                            <i class="fas fa-users"></i> <?php echo (int)$proj['ACTIVE_MEMBERS']; ?> members
+                            <i class="fas fa-users"></i> <?php echo (int)$proj['active_members']; ?> members
                         </div>
                         <?php if ($isPending): ?>
                         <button class="px-4 py-1.5 text-xs font-semibold rounded bg-black/10 cursor-not-allowed opacity-70" disabled>
@@ -500,7 +536,7 @@ function heat_level($count)
                         <?php else: ?>
                         <form method="POST" action="request_join.php">
                             <input type="hidden" name="classroom_id" value="<?php echo htmlspecialchars($classroom_id); ?>">
-                            <input type="hidden" name="project_id" value="<?php echo $proj['ID']; ?>">
+                            <input type="hidden" name="project_id" value="<?php echo $proj['id']; ?>">
                             <button type="submit" class="btn-ui px-4 py-1.5 text-xs font-semibold hover:bg-black/10 transition" style="color: var(--accent); border-color: var(--accent);">
                                 Request to Join
                             </button>
@@ -566,6 +602,7 @@ function heat_level($count)
                     <div class="card p-4 flex flex-col">
                         <h3 class="font-semibold mb-3 flex justify-between font-head">To do <span class="bg-raised border border-ui px-2 text-xs py-0.5" style="border-radius: var(--radius);">2</span></h3>
                         <div id="todo-list" class="flex-1 space-y-3 min-h-[200px]">
+                            <?php if ($isDemo): ?>
                             <div class="bg-raised border border-ui p-3 cursor-grab hover:opacity-90 transition shadow-sm" style="border-radius: var(--radius);">
                                 <div class="flex justify-between items-start mb-2">
                                     <span class="text-xs font-semibold px-2 py-1 font-mono-ui" style="background: rgba(69,208,195,.15); color: var(--accent-2); border-radius: var(--radius);">database</span>
@@ -581,6 +618,15 @@ function heat_level($count)
                                 <p class="text-sm font-medium">Compile CPU scheduling algorithms</p>
                                 <div class="mt-2 text-xs text-danger font-semibold"><i class="far fa-clock me-1"></i>Due tomorrow</div>
                             </div>
+                            <?php else: foreach (($tasks['todo'] ?? []) as $task): ?>
+                            <div class="bg-raised border border-ui p-3 cursor-grab hover:opacity-90 transition shadow-sm" style="border-radius: var(--radius);" data-task-id="<?php echo $task['id']; ?>">
+                                <div class="flex justify-between items-start mb-2">
+                                    <span class="text-xs font-semibold px-2 py-1 font-mono-ui" style="background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius);"><?php echo htmlspecialchars($task['assigned_to'] ? ($task['assignee_name'] ?? 'Assigned') : 'Unassigned'); ?></span>
+                                    <?php if ($task['priority'] === 'high'): ?><i class="fas fa-flag text-danger text-xs"></i><?php endif; ?>
+                                </div>
+                                <p class="text-sm font-semibold mb-1"><?php echo htmlspecialchars($task['title']); ?></p>
+                            </div>
+                            <?php endforeach; endif; ?>
                         </div>
                     </div>
 
@@ -666,15 +712,15 @@ function heat_level($count)
                             <div class="flex items-center justify-between p-3 bg-raised border border-ui rounded">
                                 <div class="flex items-center gap-3">
                                     <div class="w-8 h-8 rounded-full flex items-center justify-center font-bold text-xs bg-accent-2 text-bg">
-                                        <?php echo strtoupper(substr($req['USERNAME'], 0, 1)); ?>
+                                        <?php echo strtoupper(substr($req['username'], 0, 1)); ?>
                                     </div>
-                                    <span class="font-semibold text-sm"><?php echo htmlspecialchars($req['USERNAME']); ?></span>
+                                    <span class="font-semibold text-sm"><?php echo htmlspecialchars($req['username']); ?></span>
                                 </div>
                                 <div class="flex gap-2">
                                     <form method="POST" action="manage_join_request.php">
                                         <input type="hidden" name="classroom_id" value="<?php echo htmlspecialchars($classroom_id); ?>">
                                         <input type="hidden" name="project_id" value="<?php echo $myProjectId; ?>">
-                                        <input type="hidden" name="user_id" value="<?php echo $req['ID']; ?>">
+                                        <input type="hidden" name="user_id" value="<?php echo $req['id']; ?>">
                                         <input type="hidden" name="action" value="accept">
                                         <button class="btn-ui px-3 py-1.5 text-xs font-semibold bg-accent text-bg hover:opacity-90">Accept</button>
                                     </form>
@@ -693,8 +739,8 @@ function heat_level($count)
                         <div class="flex items-center gap-4">
                             <span class="status-dot ontrack" aria-hidden="true"></span>
                             <div class="w-48 flex-none">
-                                <div class="font-semibold text-sm"><?php echo htmlspecialchars($m['USERNAME']); ?></div>
-                                <div class="text-xs text-muted-ui font-mono-ui"><?php echo $m['IS_LEADER'] == 1 ? 'Project Leader' : 'Team Member'; ?></div>
+                                <div class="font-semibold text-sm"><?php echo htmlspecialchars($m['username']); ?></div>
+                                <div class="text-xs text-muted-ui font-mono-ui"><?php echo $m['is_leader'] == 1 ? 'Project Leader' : 'Team Member'; ?></div>
                             </div>
                             <div class="flex-1 min-w-0">
                                 <div class="text-sm truncate mb-1 text-muted-ui italic">Task assignment pending...</div>
@@ -985,14 +1031,32 @@ function heat_level($count)
               const l=document.getElementById(id);
               if(l && l.previousElementSibling) l.previousElementSibling.querySelector('span').textContent=l.children.length;
             });
+            
             const done = evt.to.id==='done-list';
             evt.item.classList.toggle('opacity-60', done);
             evt.item.querySelector('p')?.classList.toggle('line-through', done);
-            const bar=document.querySelector('.progress-fill');
-            if (bar) {
-                const w = parseInt(bar.style.width) || 74;
-                if (done) { bar.style.width=Math.min(100,w+2)+'%'; showToast('Weekly progress updated.'); }
-                else if (evt.from.id==='done-list') bar.style.width=Math.max(0,w-2)+'%';
+            
+            const taskId = evt.item.getAttribute('data-task-id');
+            const newStatus = evt.to.id.replace('-list', ''); // 'todo', 'inprogress', 'done'
+            
+            if (taskId) {
+                const fd = new FormData();
+                fd.append('task_id', taskId);
+                fd.append('status', newStatus);
+                
+                fetch('update_task_status.php', { method: 'POST', body: fd })
+                .then(res => res.json())
+                .then(data => {
+                    if(data.success && done) showToast('Task completed! Progress updated.');
+                });
+            } else {
+                // For demo mode fallback
+                const bar=document.querySelector('.progress-fill');
+                if (bar) {
+                    const w = parseInt(bar.style.width) || 74;
+                    if (done) { bar.style.width=Math.min(100,w+2)+'%'; showToast('Demo task updated.'); }
+                    else if (evt.from.id==='done-list') bar.style.width=Math.max(0,w-2)+'%';
+                }
             }
           }};
         ['todo-list', 'inprogress-list', 'done-list'].forEach(id => {

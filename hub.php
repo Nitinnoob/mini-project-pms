@@ -25,11 +25,11 @@ $myWorkspaces = [];
 foreach ($workspaces as $row) {
     // Oracle fetches column names in uppercase by default
     $myWorkspaces[] = [
-        'name' => $row['NAME'],
+        'name' => $row['name'],
         'desc' => 'Workspace context',
-        'members' => $row['MEMBER_COUNT'],
-        'role' => $row['ROLE'],
-        'link' => 'dashboard.php?classroom_id=' . urlencode($row['ID'])
+        'members' => $row['member_count'],
+        'role' => $row['role'],
+        'link' => 'dashboard.php?classroom_id=' . urlencode($row['id'])
     ];
 }
 

@@ -16,27 +16,35 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $code = trim($_POST['invite_code'] ?? '');
     $usn = trim(strtoupper($_POST['usn'] ?? ''));
     
-    $stmt = $pdo->prepare("SELECT id, name FROM classrooms WHERE invite_code = ?");
+    // Fetch classroom details including the requires_usn flag
+    $stmt = $pdo->prepare("SELECT id, name, requires_usn FROM classrooms WHERE invite_code = ?");
     $stmt->execute([$code]);
     $row = $stmt->fetch(PDO::FETCH_ASSOC);
     
     if ($row) {
-        $classroom_id = $row['ID'];
+        $classroom_id = $row['id'];
+        $requires_usn = $row['requires_usn'];
         
-        // Check if already a member
-        $stmtCheck = $pdo->prepare("SELECT role FROM classroom_members WHERE classroom_id = ? AND user_id = ?");
-        $stmtCheck->execute([$classroom_id, $_SESSION['user_id']]);
-        if (!$stmtCheck->fetch()) {
-            $stmtJoin = $pdo->prepare("INSERT INTO classroom_members (classroom_id, user_id, role) VALUES (?, ?, 'Team Member')");
-            $stmtJoin->execute([$classroom_id, $_SESSION['user_id']]);
+        // 1. Check USN Requirement
+        if ($requires_usn == 1 && empty($usn)) {
+            $error = 'This is an official classroom. You must enter your VTU USN to join.';
+        } 
+        // 2. Validate VTU USN Format if provided
+        elseif (!empty($usn) && !preg_match('/^\d[A-Z]{2}\d{2}[A-Z]{2}\d{3}$/i', $usn)) {
+            $error = 'Invalid USN format. Please use standard VTU format (e.g., 1RG24CS015).';
+        } 
+        else {
+            // Check if already a member
+            $stmtCheck = $pdo->prepare("SELECT role FROM classroom_members WHERE classroom_id = ? AND user_id = ?");
+            $stmtCheck->execute([$classroom_id, $_SESSION['user_id']]);
+            
+            if (!$stmtCheck->fetch()) {
+                // Insert into classroom_members WITH the scoped USN
+                $stmtJoin = $pdo->prepare("INSERT INTO classroom_members (classroom_id, user_id, role, usn) VALUES (?, ?, 'Team Member', ?)");
+                $stmtJoin->execute([$classroom_id, $_SESSION['user_id'], empty($usn) ? null : $usn]);
+            }
+            $successMessage = true;
         }
-        
-        // Update the user's USN in the users table
-        if (!empty($usn)) {
-            $stmtUsn = $pdo->prepare("UPDATE users SET usn = ? WHERE id = ?");
-            $stmtUsn->execute([$usn, $_SESSION['user_id']]);
-        }
-        $successMessage = true;
     } else {
         $error = 'Invalid invite code. Please check with your teacher.';
     }
@@ -88,8 +96,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 </div>
                 
                 <div>
-                    <label class="block text-sm font-semibold mb-2" style="color: var(--muted);">Your USN (University Seat Number)</label>
-                    <input type="text" name="usn" class="form-input" placeholder="e.g. 1RG24CS015" required style="width: 100%; padding: 0.75rem; border-radius: var(--radius); background: var(--bg); border: 1px solid var(--border); color: var(--text);">
+                    <label class="block text-sm font-semibold mb-2" style="color: var(--muted);">Your USN <span class="text-xs font-normal opacity-70">(Required for Official Classrooms)</span></label>
+                    <input type="text" name="usn" class="form-input" placeholder="e.g. 1RG24CS015" style="width: 100%; padding: 0.75rem; border-radius: var(--radius); background: var(--bg); border: 1px solid var(--border); color: var(--text);">
                 </div>
                 
                 <button type="submit" class="w-full py-3 font-semibold rounded hover:opacity-90 transition" style="background: var(--accent-2); color: var(--bg); border-radius: var(--radius);">

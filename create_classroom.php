@@ -18,15 +18,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     try {
         $pdo->beginTransaction();
         
+        $requires_usn = isset($_POST['requires_usn']) ? 1 : 0;
         $invite_code = substr(str_shuffle('0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ'), 0, 6);
-        $stmt = $pdo->prepare("INSERT INTO classrooms (name, created_by, invite_code) VALUES (?, ?, ?)");
-        $stmt->execute([$title, $_SESSION['user_id'], $invite_code]);
+        $stmt = $pdo->prepare("INSERT INTO classrooms (name, created_by, invite_code, requires_usn) VALUES (?, ?, ?, ?)");
+        $stmt->execute([$title, $_SESSION['user_id'], $invite_code, $requires_usn]);
         
-        // Fetch the ID of the classroom just created
-        $stmt2 = $pdo->prepare("SELECT MAX(id) as id FROM classrooms WHERE created_by = ?");
-        $stmt2->execute([$_SESSION['user_id']]);
-        $row = $stmt2->fetch(PDO::FETCH_ASSOC);
-        $classroom_id = $row['ID'];
+        $classroom_id = $pdo->lastInsertId();
         
         // Insert creator into classroom_members as Admin
         $stmt3 = $pdo->prepare("INSERT INTO classroom_members (classroom_id, user_id, role) VALUES (?, ?, ?)");

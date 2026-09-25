@@ -29,10 +29,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $stmt->execute([$classroom_id, $name, $desc, $_SESSION['user_id']]);
             
             // Fetch the ID of the project just created
-            $stmt2 = $pdo->prepare("SELECT MAX(id) as id FROM projects WHERE created_by = ? AND classroom_id = ?");
-            $stmt2->execute([$_SESSION['user_id'], $classroom_id]);
-            $row = $stmt2->fetch(PDO::FETCH_ASSOC);
-            $project_id = $row['ID'];
+            $project_id = $pdo->lastInsertId();
             
             // Insert creator as Leader
             $stmt3 = $pdo->prepare("INSERT INTO project_members (project_id, user_id, is_leader, join_status) VALUES (?, ?, 1, 'Active')");

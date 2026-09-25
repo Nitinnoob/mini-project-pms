@@ -19,9 +19,9 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['username'], $_POST['pa
     $user = $stmt->fetch(PDO::FETCH_ASSOC);
 
     // Oracle queries pull associative rows natively matching uppercase columns
-    if ($user && password_verify($password, $user['PASSWORD'])) { 
-        $_SESSION['user_id'] = $user['ID'];
-        $_SESSION['username'] = $user['USERNAME'];
+    if ($user && password_verify($password, $user['password'])) { 
+        $_SESSION['user_id'] = $user['id'];
+        $_SESSION['username'] = $user['username'];
         // Global 'ROLE' is ignored. Contextual roles will be set in hub.php.
         
         header("Location: hub.php");
