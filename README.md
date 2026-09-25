@@ -4,3 +4,4 @@ How to install this repo
 install xampp
 install any oracle database
 then paste this repo into xampp/htdocs folder
+database: changed from oracle to mysql
