@@ -141,23 +141,6 @@ if ($isDemo) {
             ");
             $stmtAllProjs->execute([$_SESSION['user_id'], $classroom_id]);
             $availableProjects = $stmtAllProjs->fetchAll(PDO::FETCH_ASSOC);
-            
-            // Artificial Simulation for Demo: Ensure there are at least 5 projects displayed
-            $mockProjectsPool = [
-                ['id' => 991, 'name' => 'Library Management system', 'description' => 'A digital solution for campus library book tracking, issuing, and automated fine calculation.', 'active_members' => 3, 'my_status' => 'None'],
-                ['id' => 992, 'name' => 'Hostel Management System', 'description' => 'Platform for room allocation, mess fee tracking, and hostel complaint logging.', 'active_members' => 3, 'my_status' => 'None'],
-                ['id' => 993, 'name' => 'Placement management system', 'description' => 'Web portal to track upcoming campus drives, student eligibility, and interview schedules.', 'active_members' => 3, 'my_status' => 'Pending'],
-                ['id' => 994, 'name' => 'Vehicle parking management System', 'description' => 'Automated parking slot allocation and campus entry tracking using RFID.', 'active_members' => 4, 'my_status' => 'None'],
-                ['id' => 995, 'name' => 'Hospital Management System', 'description' => 'Centralized patient record management, appointment booking, and inventory system.', 'active_members' => 4, 'my_status' => 'None']
-            ];
-            
-            $currentCount = count($availableProjects);
-            if ($currentCount < 5) {
-                $needed = 5 - $currentCount;
-                // Slice the required number of mock projects and merge them with the real ones
-                $mockSlice = array_slice($mockProjectsPool, 0, $needed);
-                $availableProjects = array_merge($availableProjects, $mockSlice);
-            }
         }
     }
 }
@@ -174,21 +157,6 @@ if ($actualView === 'Student' || $actualView === 'Project Leader') {
 
 // 1. Global project progress (shown in every layout, styled per mode)
 $isNewlyCreated = ($actualView === 'Student' || $actualView === 'Project Leader') && count($actualTeamRoster ?? []) <= 1;
-if ($isDemo) { $progressPercent = $isNewlyCreated ? 0 : 74; }
-// In real mode, $progressPercent is already calculated dynamically above
-if ($progressPercent === 0) {
-    $progressStatus = 'ontrack';
-    $progressWord = 'project initialized';
-} elseif ($progressPercent < 50) {
-    $progressStatus = 'behind';
-    $progressWord = 'falling behind pace';
-} elseif ($progressPercent >= 80) {
-    $progressStatus = 'ahead';
-    $progressWord = 'ahead of pace';
-} else {
-    $progressStatus = 'ontrack';
-    $progressWord = 'on pace for Friday';
-}
 
 if ($isDemo) {
 // 2. Calendar data (Student layout) — current month, demo tasks pinned to days
@@ -223,6 +191,7 @@ if ($isDemo) {
     $onTrackCount = count(array_filter($teamRoster, fn($m) => $m['status'] !== 'red'));
     $avgProgress = (int) round(array_sum(array_column($teamRoster, 'percent')) / count($teamRoster));
     $daysToDeadline = 3;
+    $progressPercent = $isNewlyCreated ? 0 : 74;
     
     // 4. Project groups (Teacher layout) — group-level ledger
     $mockProjectGroupsRaw = [
@@ -256,6 +225,7 @@ if ($isDemo) {
     $issueCount = 0;
     $pendingIssues = [];
     $teamRoster = [];
+    $progressPercent = 0; // default for views with no personal project (Teacher/Marketplace)
 
     if (isset($myProjectId)) {
         $stmtTasks = $pdo->prepare("SELECT t.*, u.username as assignee_name FROM tasks t LEFT JOIN users u ON t.assigned_to = u.id WHERE t.project_id = ? ORDER BY t.created_at DESC");
@@ -309,6 +279,25 @@ if ($isDemo) {
     // 5. Contribution heatmap
     $heatmapWeeks = 10;
     $heatmapPattern = array_fill(0, 70, 0);
+}
+
+// Now that $progressPercent is guaranteed set by either branch above,
+// derive the status word/color from it. This used to run BEFORE the
+// branch that computes $progressPercent in real (non-demo) mode, which
+// meant every real classroom hit an undefined-variable warning here and
+// always fell into the "falling behind pace" / behind status.
+if ($progressPercent === 0) {
+    $progressStatus = 'ontrack';
+    $progressWord = 'project initialized';
+} elseif ($progressPercent < 50) {
+    $progressStatus = 'behind';
+    $progressWord = 'falling behind pace';
+} elseif ($progressPercent >= 80) {
+    $progressStatus = 'ahead';
+    $progressWord = 'ahead of pace';
+} else {
+    $progressStatus = 'ontrack';
+    $progressWord = 'on pace for Friday';
 }
 function heat_level($count)
 {
@@ -1249,4 +1238,3 @@ function heat_level($count)
 </body>
 
 </html>
-

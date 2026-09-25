@@ -24,9 +24,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if ($row) {
         $classroom_id = $row['id'];
         $requires_usn = $row['requires_usn'];
-        
+
+        // Check membership FIRST — someone who already belongs to this
+        // classroom (most notably the teacher who created it, already an
+        // Admin member) shouldn't be forced through USN validation or shown
+        // a "Joined Successfully!" as if this were a fresh join.
+        $stmtCheck = $pdo->prepare("SELECT role FROM classroom_members WHERE classroom_id = ? AND user_id = ?");
+        $stmtCheck->execute([$classroom_id, $_SESSION['user_id']]);
+        $existingMembership = $stmtCheck->fetch(PDO::FETCH_ASSOC);
+
+        if ($existingMembership) {
+            $alreadyMember = true;
+            $existingRole = $existingMembership['role'];
+            $successMessage = true; // send them into the workspace, just don't claim a fresh join
+        }
         // 1. Check USN Requirement
-        if ($requires_usn == 1 && empty($usn)) {
+        elseif ($requires_usn == 1 && empty($usn)) {
             $error = 'This is an official classroom. You must enter your VTU USN to join.';
         } 
         // 2. Validate VTU USN Format if provided
@@ -34,15 +47,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $error = 'Invalid USN format. Please use standard VTU format (e.g., 1RG24CS015).';
         } 
         else {
-            // Check if already a member
-            $stmtCheck = $pdo->prepare("SELECT role FROM classroom_members WHERE classroom_id = ? AND user_id = ?");
-            $stmtCheck->execute([$classroom_id, $_SESSION['user_id']]);
-            
-            if (!$stmtCheck->fetch()) {
-                // Insert into classroom_members WITH the scoped USN
-                $stmtJoin = $pdo->prepare("INSERT INTO classroom_members (classroom_id, user_id, role, usn) VALUES (?, ?, 'Team Member', ?)");
-                $stmtJoin->execute([$classroom_id, $_SESSION['user_id'], empty($usn) ? null : $usn]);
-            }
+            $stmtJoin = $pdo->prepare("INSERT INTO classroom_members (classroom_id, user_id, role, usn) VALUES (?, ?, 'Team Member', ?)");
+            $stmtJoin->execute([$classroom_id, $_SESSION['user_id'], empty($usn) ? null : $usn]);
             $successMessage = true;
         }
     } else {
@@ -114,8 +120,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <!-- Success Overlay -->
     <div id="successOverlay" class="success-overlay <?php echo $successMessage ? 'show' : ''; ?>">
         <i class="fas fa-check-circle text-6xl mb-6 success-icon" style="color: var(--accent-2);"></i>
-        <h2 class="text-3xl font-bold mb-2 font-head success-icon" style="animation-delay: 0.1s;">Joined Successfully!</h2>
-        <p class="text-muted-ui success-icon" style="animation-delay: 0.2s;">Taking you to the workspace...</p>
+        <?php if (!empty($alreadyMember)): ?>
+            <h2 class="text-3xl font-bold mb-2 font-head success-icon" style="animation-delay: 0.1s;">Already in this classroom</h2>
+            <p class="text-muted-ui success-icon" style="animation-delay: 0.2s;">
+                You're already a member here as <?php echo htmlspecialchars($existingRole ?? 'a member'); ?>. Taking you back to it...
+            </p>
+        <?php else: ?>
+            <h2 class="text-3xl font-bold mb-2 font-head success-icon" style="animation-delay: 0.1s;">Joined Successfully!</h2>
+            <p class="text-muted-ui success-icon" style="animation-delay: 0.2s;">Taking you to the workspace...</p>
+        <?php endif; ?>
     </div>
 
     <script>
@@ -127,4 +140,3 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     </script>
 </body>
 </html>
-

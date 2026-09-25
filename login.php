@@ -18,11 +18,11 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['username'], $_POST['pa
     $stmt->execute([$username]);
     $user = $stmt->fetch(PDO::FETCH_ASSOC);
 
-    // Oracle queries pull associative rows natively matching uppercase columns
+    // Validate password hash and initialize session
     if ($user && password_verify($password, $user['password'])) { 
         $_SESSION['user_id'] = $user['id'];
         $_SESSION['username'] = $user['username'];
-        // Global 'ROLE' is ignored. Contextual roles will be set in hub.php.
+        // Global role is ignored; contextual roles are determined per classroom.
         
         header("Location: hub.php");
         exit;
