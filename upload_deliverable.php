@@ -1,4 +1,4 @@
-﻿<?php
+<?php
 session_start();
 require 'dbs.php';
 
@@ -25,6 +25,12 @@ if (isset($_FILES['deliverable']) && $_FILES['deliverable']['error'] === UPLOAD_
         mkdir($uploadDir, 0777, true);
     }
     
+    // Add defense-in-depth: .htaccess to prevent script execution
+    $htaccess_path = $uploadDir . ".htaccess";
+    if (!file_exists($htaccess_path)) {
+        file_put_contents($htaccess_path, "php_flag engine off\nOptions -ExecCGI\nSetHandler default-handler\n");
+    }
+    
     $fileName = basename($_FILES['deliverable']['name']);
     // Sanitize file name
     $fileName = preg_replace("/[^a-zA-Z0-9.-]/", "_", $fileName);
@@ -32,6 +38,14 @@ if (isset($_FILES['deliverable']) && $_FILES['deliverable']['error'] === UPLOAD_
     // Add unique prefix to prevent overwriting
     $uniqueFileName = time() . '_' . $fileName;
     $targetPath = $uploadDir . $uniqueFileName;
+    
+    // Validate file extension
+    $file_extension = strtolower(pathinfo($targetPath, PATHINFO_EXTENSION));
+    $allowed_extensions = ['pdf', 'docx', 'zip', 'pptx', 'txt'];
+
+    if (!in_array($file_extension, $allowed_extensions)) {
+        die("Error: Invalid file type. Only PDF, DOCX, ZIP, PPTX, and TXT are allowed.");
+    }
     
     if (move_uploaded_file($_FILES['deliverable']['tmp_name'], $targetPath)) {
         $stmt = $pdo->prepare("INSERT INTO deliverables (project_id, task_id, uploaded_by, file_name, file_path) VALUES (?, ?, ?, ?, ?)");

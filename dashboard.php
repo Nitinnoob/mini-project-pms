@@ -24,6 +24,14 @@ $viewData['classroom_id'] = $_GET['classroom_id'] ?? null;
 // teacher_group_view.php). Deliberately skips the DB entirely so a demo
 // keeps working even on a fresh account or a flaky DB connection.
 // ------------------------------------------------------------------
+$viewData['mockProjectGroupsRaw'] = [
+    ['id' => 23, 'name' => 'Group 23 — Project management system', 'members' => 4, 'percent' => 96, 'desc' => 'A comprehensive platform for students to manage mini-projects, track milestones, and communicate with their guides asynchronously.', 'member_names' => ['Ranjith kumar', 'Nithin gowda', 'Vinutha H K', 'Vinaya kumar']],
+    ['id' => 14, 'name' => 'Group 14 — Library Management system', 'members' => 3, 'percent' => 92, 'desc' => 'A digital solution for campus library book tracking, issuing, and automated fine calculation.', 'member_names' => ['Twayib', 'Siddharth', 'Suhass']],
+    ['id' => 16, 'name' => 'Group 16 — Placement management system',  'members' => 3, 'percent' => 78, 'desc' => 'Web portal to track upcoming campus drives, student eligibility, and interview schedules.', 'member_names' => ['Varshini G', 'Shivani Kumari', 'Sushmita C M']],
+    ['id' => 15, 'name' => 'Group 15 — Hostel Management System',        'members' => 3, 'percent' => 60, 'desc' => 'Platform for room allocation, mess fee tracking, and hostel complaint logging.', 'member_names' => ['Sameer', 'Saquib', 'Raiyaan']],
+    ['id' => 17, 'name' => 'Group 17 — Vehicle parking management System', 'members' => 4, 'percent' => 45, 'desc' => 'Automated parking slot allocation and campus entry tracking using RFID.', 'member_names' => ['Shodhan R', 'Prajwal', 'Sudiksha D', 'Sneha Sanjeev Mayannavar']],
+    ['id' => 18, 'name' => 'Group 18 — Hospital Management System',       'members' => 4, 'percent' => 30, 'desc' => 'Centralized patient record management, appointment booking, and inventory system.', 'member_names' => ['Vinay kumar G S', 'Pavan kalli', 'Prashanth K S', 'Shreyas']],
+];
 $allowedDemoViews = ['Student', 'Project Leader', 'Teacher', 'TeacherDrilldown', 'Marketplace'];
 $demoView = $_GET['demo_view'] ?? null;
 $viewData['isDemo'] = in_array($demoView, $allowedDemoViews, true);
@@ -32,12 +40,33 @@ if ($viewData['isDemo']) {
     $viewData['classroom_id'] = $viewData['classroom_id'] ?: 'demo';
     $viewData['classroomName'] = 'Section B Demo';
     $viewData['inviteCode'] = 'RGIT-CS-B';
-    $viewData['actualView'] = $demoView;
+    
+    if ($demoView === 'TeacherDrilldown') {
+        $viewData['actualView'] = 'Project Leader';
+        $viewData['isTeacherDrilldown'] = true;
+    } else {
+        $viewData['actualView'] = $demoView;
+    }
 
     if ($viewData['actualView'] === 'Student' || $viewData['actualView'] === 'Project Leader') {
+        $requested_project_id = $_GET['project_id'] ?? null;
+        $mockProjectName = 'AI-Powered Analytics (Demo)';
+        $mockProjectDesc = 'Analyzing real-time campus foot traffic...';
+        
+        if ($requested_project_id) {
+            foreach ($viewData['mockProjectGroupsRaw'] as $group) {
+                if ($group['id'] == $requested_project_id) {
+                    $mockProjectName = $group['name'];
+                    $mockProjectDesc = "Demo workspace for " . htmlspecialchars($group['name']);
+                    break;
+                }
+            }
+        }
+
         $viewData['myProject'] = [
             'id' => 9001,
-            'name' => 'AI-Powered Analytics (Demo)',
+            'name' => $mockProjectName,
+            'desc' => $mockProjectDesc,
             'is_leader' => $viewData['actualView'] === 'Project Leader' ? 1 : 0,
             'join_status' => 'Active',
         ];
@@ -90,7 +119,29 @@ if ($viewData['isDemo']) {
     $contextualRole = $member['role'] ?? 'Team Member'; // Admin or Team Member
 
     if ($contextualRole === 'Admin') {
-        $viewData['actualView'] = 'Teacher';
+        if (!empty($_GET['project_id'])) {
+            // Teacher Drilldown Mode: Pretend to be the Project Leader, but disable writes
+            $viewData['actualView'] = 'Project Leader';
+            $viewData['isTeacherDrilldown'] = true;
+            $viewData['myProjectId'] = (int)$_GET['project_id'];
+            
+            // Fetch the project details
+            $stmtProj = $pdo->prepare("SELECT name, id FROM projects WHERE id = ? AND classroom_id = ?");
+            $stmtProj->execute([$viewData['myProjectId'], $viewData['classroom_id']]);
+            $viewData['myProject'] = $stmtProj->fetch(PDO::FETCH_ASSOC);
+            
+            if (!$viewData['myProject']) { header("Location: dashboard.php?classroom_id=" . urlencode($viewData['classroom_id'])); exit; }
+            
+            // Fetch roster
+            $stmtRoster = $pdo->prepare("SELECT u.id, u.username, pm.is_leader FROM project_members pm JOIN users u ON pm.user_id = u.id WHERE pm.project_id = ? AND pm.join_status = 'Active'");
+            $stmtRoster->execute([$viewData['myProjectId']]);
+            $viewData['actualTeamRoster'] = $stmtRoster->fetchAll(PDO::FETCH_ASSOC);
+            
+            $viewData['pendingRequests'] = []; // Teachers don't manage team invites
+            $viewData['unassignedClassmates'] = [];
+        } else {
+            $viewData['actualView'] = 'Teacher';
+        }
     } else {
         // Check if the user is part of an active project in this classroom
         $stmtProj = $pdo->prepare("
@@ -151,23 +202,6 @@ if ($viewData['isDemo']) {
             ");
             $stmtAllProjs->execute([$_SESSION['user_id'], $viewData['classroom_id']]);
             $viewData['availableProjects'] = $stmtAllProjs->fetchAll(PDO::FETCH_ASSOC);
-            
-            // Artificial Simulation for Demo: Ensure there are at least 5 projects displayed
-            $mockProjectsPool = [
-                ['id' => 991, 'name' => 'Library Management system', 'description' => 'A digital solution for campus library book tracking, issuing, and automated fine calculation.', 'active_members' => 3, 'my_status' => 'None'],
-                ['id' => 992, 'name' => 'Hostel Management System', 'description' => 'Platform for room allocation, mess fee tracking, and hostel complaint logging.', 'active_members' => 3, 'my_status' => 'None'],
-                ['id' => 993, 'name' => 'Placement management system', 'description' => 'Web portal to track upcoming campus drives, student eligibility, and interview schedules.', 'active_members' => 3, 'my_status' => 'Pending'],
-                ['id' => 994, 'name' => 'Vehicle parking management System', 'description' => 'Automated parking slot allocation and campus entry tracking using RFID.', 'active_members' => 4, 'my_status' => 'None'],
-                ['id' => 995, 'name' => 'Hospital Management System', 'description' => 'Centralized patient record management, appointment booking, and inventory system.', 'active_members' => 4, 'my_status' => 'None']
-            ];
-            
-            $currentCount = count($viewData['availableProjects']);
-            if ($currentCount < 5) {
-                $needed = 5 - $currentCount;
-                // Slice the required number of mock projects and merge them with the real ones
-                $mockSlice = array_slice($mockProjectsPool, 0, $needed);
-                $viewData['availableProjects'] = array_merge($viewData['availableProjects'], $mockSlice);
-            }
         }
     }
 }
@@ -300,14 +334,7 @@ if ($viewData['isDemo']) {
 }
 
 // 4. Project groups (Teacher layout) — group-level ledger
-$viewData['mockProjectGroupsRaw'] = [
-    ['id' => 23, 'name' => 'Group 23 — Project management system', 'members' => 4, 'percent' => 96, 'desc' => 'A comprehensive platform for students to manage mini-projects, track milestones, and communicate with their guides asynchronously.', 'member_names' => ['Ranjith kumar', 'Nithin gowda', 'Vinutha H K', 'Vinaya kumar']],
-    ['id' => 14, 'name' => 'Group 14 — Library Management system', 'members' => 3, 'percent' => 92, 'desc' => 'A digital solution for campus library book tracking, issuing, and automated fine calculation.', 'member_names' => ['Twayib', 'Siddharth', 'Suhass']],
-    ['id' => 16, 'name' => 'Group 16 — Placement management system',  'members' => 3, 'percent' => 78, 'desc' => 'Web portal to track upcoming campus drives, student eligibility, and interview schedules.', 'member_names' => ['Varshini G', 'Shivani Kumari', 'Sushmita C M']],
-    ['id' => 15, 'name' => 'Group 15 — Hostel Management System',        'members' => 3, 'percent' => 60, 'desc' => 'Platform for room allocation, mess fee tracking, and hostel complaint logging.', 'member_names' => ['Sameer', 'Saquib', 'Raiyaan']],
-    ['id' => 17, 'name' => 'Group 17 — Vehicle parking management System', 'members' => 4, 'percent' => 45, 'desc' => 'Automated parking slot allocation and campus entry tracking using RFID.', 'member_names' => ['Shodhan R', 'Prajwal', 'Sudiksha D', 'Sneha Sanjeev Mayannavar']],
-    ['id' => 18, 'name' => 'Group 18 — Hospital Management System',       'members' => 4, 'percent' => 30, 'desc' => 'Centralized patient record management, appointment booking, and inventory system.', 'member_names' => ['Vinay kumar G S', 'Pavan kalli', 'Prashanth K S', 'Shreyas']],
-];
+
 $viewData['projectGroups'] = [];
 
 if (!$viewData['isDemo'] && $viewData['actualView'] === 'Teacher' && isset($viewData['classroom_id'])) {
