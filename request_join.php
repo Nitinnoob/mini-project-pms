@@ -12,8 +12,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     
     if ($classroom_id && $project_id) {
         // Validate that the user is actually in this classroom
-        $stmt = $pdo->prepare("SELECT role FROM classroom_members WHERE classroom_id = ? AND user_id = ?");
-        $stmt->execute([$classroom_id, $_SESSION['user_id']]);
+        $stmt = $pdo->prepare("
+            SELECT cm.role 
+            FROM classroom_members cm
+            JOIN projects p ON p.classroom_id = cm.classroom_id
+            WHERE cm.classroom_id = ? AND cm.user_id = ? AND p.id = ?
+        ");
+        $stmt->execute([$classroom_id, $_SESSION['user_id'], $project_id]);
         if ($stmt->fetch()) {
             // Check if request already exists
             $stmtCheck = $pdo->prepare("SELECT 1 FROM project_members WHERE project_id = ? AND user_id = ?");

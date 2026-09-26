@@ -18,12 +18,11 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['username'], $_POST['pa
     $stmt->execute([$username]);
     $user = $stmt->fetch(PDO::FETCH_ASSOC);
 
-    // Validate password hash and initialize session
-    if ($user && password_verify($password, $user['password'])) { 
+    if ($user && password_verify($password, $user['password'])) {
         $_SESSION['user_id'] = $user['id'];
         $_SESSION['username'] = $user['username'];
-        // Global role is ignored; contextual roles are determined per classroom.
-        
+        // Global 'role' is ignored. Contextual roles are set per classroom in hub.php.
+
         header("Location: hub.php");
         exit;
     } else {
@@ -34,39 +33,37 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['username'], $_POST['pa
 
 <?php include 'header.php'; ?>
 
-<div class="container auth-container">
-    <div class="card shadow-lg p-4 custom-card border-0">
-        <div class="card-body">
-            <h3 class="card-title text-center mb-4 fw-bold text-dark">Sign In</h3>
-            
+            <h1>Sign in</h1>
+            <p class="sub">Welcome back — pick up where your team left off.</p>
+
             <?php if (!empty($message)): ?>
-                <div class="alert alert-danger py-2 text-center small" role="alert">
-                    <?php echo htmlspecialchars($message); ?>
+                <div class="auth-alert danger">
+                    <i class="fas fa-triangle-exclamation mt-0.5"></i>
+                    <span><?php echo htmlspecialchars($message); ?></span>
                 </div>
             <?php endif; ?>
 
             <form method="POST">
-                <div class="mb-3">
-                    <label class="form-label small text-muted fw-semibold">Username</label>
-                    <input type="text" name="username" class="form-control" placeholder="Enter username" required>
+                <div class="mb-5">
+                    <label class="auth-label">Username</label>
+                    <input type="text" name="username" class="form-input" placeholder="Enter your username" required autofocus>
                 </div>
-                
-                <div class="mb-3">
-                    <label class="form-label small text-muted fw-semibold">Password</label>
-                    <div class="input-group">
-                        <input type="password" name="password" id="loginPassword" class="form-control" placeholder="Enter password" required>
-                        <button class="btn btn-outline-secondary toggle-password" type="button" data-target="loginPassword" style="border-color: #dee2e6;">
+
+                <div class="mb-5">
+                    <label class="auth-label">Password</label>
+                    <div class="auth-field">
+                        <input type="password" name="password" id="loginPassword" class="form-input" placeholder="Enter your password" required>
+                        <button class="toggle-password" type="button" data-target="loginPassword" aria-label="Show password">
                             <i class="fas fa-eye"></i>
                         </button>
                     </div>
                 </div>
-                
-                <button type="submit" class="btn btn-custom w-100 fw-bold py-2 mt-2">Log In</button>
+
+                <button type="submit" class="auth-submit">Log in</button>
             </form>
-            
-            <div class="text-center mt-3 small">
-                <span class="text-muted">Don't have an account?</span> 
-                <a href="registers.php" class="text-decoration-none">Sign Up</a>
+
+            <div class="auth-switch">
+                Don't have an account? <a href="registers.php">Sign up</a>
             </div>
         </div>
     </div>
@@ -75,19 +72,12 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['username'], $_POST['pa
 <script>
 document.querySelectorAll('.toggle-password').forEach(button => {
     button.addEventListener('click', function() {
-        const targetId = this.getAttribute('data-target');
-        const input = document.getElementById(targetId);
+        const input = document.getElementById(this.getAttribute('data-target'));
         const icon = this.querySelector('i');
-        
-        if (input.type === 'password') {
-            input.type = 'text';
-            icon.classList.remove('fa-eye');
-            icon.classList.add('fa-eye-slash');
-        } else {
-            input.type = 'password';
-            icon.classList.remove('fa-eye-slash');
-            icon.classList.add('fa-eye');
-        }
+        const show = input.type === 'password';
+        input.type = show ? 'text' : 'password';
+        icon.classList.toggle('fa-eye', !show);
+        icon.classList.toggle('fa-eye-slash', show);
     });
 });
 </script>

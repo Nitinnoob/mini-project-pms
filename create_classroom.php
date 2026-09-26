@@ -11,11 +11,22 @@ $username = htmlspecialchars($_SESSION['username'] ?? 'User');
 $initial = strtoupper(substr($username, 0, 1));
 
 $successMessage = false;
+$errorMessage = null;
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $title = $_POST['classroom_name'] ?? 'New Classroom';
+    $title = trim($_POST['classroom_name'] ?? 'New Classroom');
     $user_role = 'Admin'; // Creators of classrooms are automatically Admins (HOD/Teacher)
     
-    try {
+    // Check if a classroom with this name already exists for this user
+    $stmtCheck = $pdo->prepare("SELECT id FROM classrooms WHERE name = ? AND created_by = ?");
+    $stmtCheck->execute([$title, $_SESSION['user_id']]);
+    $existing = $stmtCheck->fetch(PDO::FETCH_ASSOC);
+    
+    if ($existing) {
+        $errorMessage = "You have already created a classroom named '" . htmlspecialchars($title) . "'.";
+        $existingClassroomId = $existing['id'];
+    } else {
+        try {
         $pdo->beginTransaction();
         
         $requires_usn = isset($_POST['requires_usn']) ? 1 : 0;
@@ -33,8 +44,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $successMessage = true;
     } catch (Exception $e) {
         $pdo->rollBack();
-        // Fallback for errors in this demo
-        $successMessage = false;
+        $errorMessage = "Database error: Could not create classroom.";
+    }
     }
 }
 ?>
@@ -76,6 +87,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 <h2 class="text-2xl font-bold" style="font-family: var(--font-head);">Create New Classroom</h2>
                 <p class="text-sm" style="color: var(--muted);">Set up a workspace for your entire class (e.g., Section B).</p>
             </div>
+
+            <?php if ($errorMessage): ?>
+            <div class="mb-6 p-4 rounded text-sm font-semibold border" style="background: rgba(240, 68, 56, 0.1); color: var(--danger); border-color: var(--danger);">
+                <i class="fas fa-exclamation-triangle me-2"></i> <?php echo $errorMessage; ?>
+            </div>
+            <?php endif; ?>
 
             <form id="createForm" method="POST" class="space-y-6">
                 <div>

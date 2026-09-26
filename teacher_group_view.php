@@ -149,7 +149,7 @@ function heat_level($count) {
         </div>
 
         <div class="flex items-center gap-5 text-sm">
-            <span class="text-xs font-semibold px-2 py-1 border border-ui rounded" style="color: var(--accent);"><span style="color: var(--bg);">Teacher Mode (Read-Only)</span></span>
+            <span class="text-xs font-semibold px-2 py-1 border border-ui rounded" style="background: var(--accent); color: var(--bg);">Teacher Mode (Read-Only)</span>
             <div class="flex items-center gap-2">
                 <span class="font-semibold"><?php echo $username; ?></span>
                 <div class="h-8 w-8 rounded-full flex items-center justify-center font-bold" style="background: var(--accent); color: #fff;"><?php echo $initial; ?></div>

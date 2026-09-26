@@ -1,4 +1,4 @@
-CREATE DATABASE IF NOT EXISTS pms;
+﻿CREATE DATABASE IF NOT EXISTS pms;
 USE pms;
 
 -- SyncSpace MySQL Schema
@@ -41,8 +41,10 @@ CREATE TABLE projects (
     name VARCHAR(255) NOT NULL,
     description TEXT,
     created_by INT NOT NULL,
+    mentor_id INT DEFAULT NULL,
     FOREIGN KEY (classroom_id) REFERENCES classrooms(id) ON DELETE CASCADE,
-    FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE CASCADE
+    FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (mentor_id) REFERENCES users(id) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- 5. Project Members Table
@@ -65,6 +67,7 @@ CREATE TABLE tasks (
     title VARCHAR(255) NOT NULL,
     description TEXT,
     status ENUM('todo', 'inprogress', 'done') DEFAULT 'todo',
+    milestone ENUM('Synopsis', 'Phase 1', 'Phase 2', 'Final Demo') DEFAULT 'Synopsis',
     priority ENUM('normal', 'high') DEFAULT 'normal',
     due_date DATE DEFAULT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -83,4 +86,30 @@ CREATE TABLE issues (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (project_id) REFERENCES projects(id) ON DELETE CASCADE,
     FOREIGN KEY (raised_by) REFERENCES users(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- 8. Deliverables (File Uploads)
+CREATE TABLE deliverables (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    project_id INT NOT NULL,
+    task_id INT DEFAULT NULL,
+    uploaded_by INT NOT NULL,
+    file_name VARCHAR(255) NOT NULL,
+    file_path VARCHAR(255) NOT NULL,
+    uploaded_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (project_id) REFERENCES projects(id) ON DELETE CASCADE,
+    FOREIGN KEY (task_id) REFERENCES tasks(id) ON DELETE SET NULL,
+    FOREIGN KEY (uploaded_by) REFERENCES users(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- 9. Activity Log (Audit Trail)
+CREATE TABLE activity_log (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    project_id INT NOT NULL,
+    user_id INT NOT NULL,
+    action VARCHAR(255) NOT NULL,
+    details TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (project_id) REFERENCES projects(id) ON DELETE CASCADE,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
