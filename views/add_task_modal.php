@@ -46,6 +46,10 @@
                     <option value="high">High</option>
                 </select>
             </div>
+            <div>
+                <label class="block text-sm font-semibold mb-1">Due Date (Optional)</label>
+                <input type="date" name="due_date" class="w-full bg-raised border border-ui rounded px-3 py-2 text-sm focus:outline-none focus:border-accent transition">
+            </div>
             
             <div class="pt-4 border-t border-ui" style="border-color: var(--border);">
                 <button type="submit" class="w-full btn-ui py-2 font-bold rounded" style="background: var(--accent); color: var(--bg);">

@@ -43,11 +43,12 @@
             </div>
 
             <!-- TAB 1: My Board (kanban / calendar) -->
+            <?php $isCalendar = ($viewData['activeBoardView'] ?? 'kanban') === 'calendar'; ?>
             <div id="leader-tab-board" class="view-pane flex-1 flex flex-col">
                 <div class="flex justify-between items-end mb-4 flex-wrap gap-3">
                     <div class="flex items-center gap-1">
-                        <button id="toggleKanbanBtn" class="tab-btn active px-3 py-2">board.kanban</button>
-                        <button id="toggleCalendarBtn" class="tab-btn px-3 py-2">calendar.month</button>
+                        <button id="toggleKanbanBtn" class="tab-btn px-3 py-2 <?php echo !$isCalendar ? 'active' : ''; ?>">board.kanban</button>
+                        <button id="toggleCalendarBtn" class="tab-btn px-3 py-2 <?php echo $isCalendar ? 'active' : ''; ?>">calendar.month</button>
                     </div>
                     <div class="flex gap-2">
                     <?php if (empty($viewData['isTeacherDrilldown'])): ?>
@@ -64,7 +65,7 @@
                 </div>
                 </div>
 
-                <div id="kanban-view" class="view-pane grid grid-cols-1 md:grid-cols-3 gap-4 flex-1">
+                <div id="kanban-view" class="view-pane grid grid-cols-1 md:grid-cols-3 gap-4 flex-1 <?php echo $isCalendar ? 'hidden' : ''; ?>">
                     <div class="card p-4 flex flex-col">
                         <h3 class="font-semibold mb-3 flex justify-between font-head">To do <span class="bg-raised border border-ui px-2 text-xs py-0.5" style="border-radius: var(--radius);"><?php echo count($viewData['tasks']["todo"] ?? []); ?></span></h3>
                         <div id="todo-list" class="flex-1 space-y-3 min-h-[200px]">
@@ -124,9 +125,17 @@
                 </div>
             </div>
 
-                <div id="calendar-view" class="view-pane card p-4 flex-1 hidden">
+                <div id="calendar-view" class="view-pane card p-4 flex-1 <?php echo !$isCalendar ? 'hidden' : ''; ?>">
                     <div class="flex justify-between items-center mb-4">
-                        <h3 class="font-semibold font-head"><?php echo $viewData['monthLabel']; ?></h3>
+                        <div class="flex items-center gap-3">
+                            <a href="<?php echo htmlspecialchars($viewData['prevMonthUrl']); ?>" class="cal-nav-btn btn-ui px-2.5 py-1 text-xs border border-ui rounded hover:border-accent transition" title="Previous Month">
+                                <i class="fas fa-chevron-left"></i>
+                            </a>
+                            <h3 class="font-semibold font-head"><?php echo $viewData['monthLabel']; ?></h3>
+                            <a href="<?php echo htmlspecialchars($viewData['nextMonthUrl']); ?>" class="cal-nav-btn btn-ui px-2.5 py-1 text-xs border border-ui rounded hover:border-accent transition" title="Next Month">
+                                <i class="fas fa-chevron-right"></i>
+                            </a>
+                        </div>
                         <div class="flex items-center gap-3 text-xs text-muted-ui font-mono-ui">
                             <span class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-full inline-block" style="background: var(--danger);"></span>high</span>
                             <span class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-full inline-block" style="background: var(--accent-2);"></span>normal</span>
@@ -137,9 +146,9 @@
                     </div>
                     <div class="grid grid-cols-7 gap-2">
                         <?php
-                        for ($b = 1; $b < $startWeekday; $b++) echo '<div class="cal-cell"></div>';
-                        for ($d = 1; $d <= $daysInMonth; $d++) {
-                            $isToday = ($d === $todayNum);
+                        for ($b = 1; $b < $viewData['startWeekday']; $b++) echo '<div class="cal-cell"></div>';
+                        for ($d = 1; $d <= $viewData['daysInMonth']; $d++) {
+                            $isToday = (!empty($viewData['isCurrentMonth']) && $d === ($viewData['todayNum'] ?? 0));
                             echo '<div class="cal-cell bg-raised border border-ui p-1.5 flex flex-col ' . ($isToday ? 'is-today' : '') . '" style="border-radius: var(--radius);">';
                             echo '<span class="text-xs font-semibold font-mono-ui ' . ($isToday ? 'text-accent-2' : 'text-muted-ui') . '">' . $d . '</span><div class="mt-1 space-y-1">';
                             if (isset($viewData['calendarTasks'][$d])) {
