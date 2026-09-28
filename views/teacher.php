@@ -1,4 +1,4 @@
-        <!-- ============================================================ -->
+<!-- ============================================================ -->
         <!-- TEACHER — Marking desk & Live Roster                          -->
         <!-- ============================================================ -->
         <?php
@@ -23,15 +23,11 @@
                         <p class="text-muted-ui text-sm mt-1" id="ledger-stats"><?php echo $totalGroups; ?> groups &middot; <?php echo $nearlyFinishedGroups; ?> nearly finished</p>
                     </div>
                     <div class="flex gap-3">
-                        <?php if ($viewData['isDemo']): ?>
-                        <button onclick="simulateGroups()" class="btn-ui px-4 py-1.5 text-xs font-semibold hover:bg-black/10 transition flex items-center gap-2" style="color: var(--accent); border-color: var(--accent);">
-                            <i class="fas fa-play"></i> Simulate Groups
-                        </button>
-                        <?php else: ?>
-                        <button onclick="copyInviteCode()" class="btn-ui px-4 py-1.5 text-xs font-semibold hover:bg-black/10 transition flex items-center gap-2" style="color: var(--accent); border-color: var(--accent);">
+                        
+                        <button onclick="copyInviteCode()" class="btn-ui px-4 py-1.5 text-xs font-semibold hover-overlay-medium transition flex items-center gap-2" style="color: var(--accent); border-color: var(--accent);">
                             <i class="fas fa-copy"></i> Copy Invite Code
                         </button>
-                        <?php endif; ?>
+                        
                         <button id="sortLedgerBtn" class="ledger-head-btn text-sm font-semibold pb-0.5">
                             Sort by completion <i class="fas fa-arrow-down-short-wide ms-1 text-xs"></i>
                         </button>
@@ -43,13 +39,9 @@
                         <span>Group</span><span class="w-20 text-right">Members</span><span class="w-40">Completion</span><span class="w-16 text-right">Status</span>
                     </div>
                     <div id="ledger-body" class="flex-1">
-                        <?php if (empty($viewData['projectGroups']) && !$viewData['isDemo']): ?>
+                        <?php if (empty($viewData['projectGroups'])): ?>
                         <div class="py-12 text-center text-muted-ui text-sm italic" id="empty-groups-state">
                             Waiting for students to create project groups...
-                        </div>
-                        <?php elseif ($viewData['isDemo']): ?>
-                        <div class="py-12 text-center text-muted-ui text-sm italic" id="empty-groups-state">
-                            Click 'Simulate Groups' to watch the incoming data feed...
                         </div>
                         <?php endif; ?>
                         <?php foreach ($viewData['projectGroups'] as $index => $g):
@@ -59,7 +51,7 @@
                             $statusColor = $ink;
                         ?>
                         <div class="ledger-item flex flex-col" data-percent="<?php echo $g['percent']; ?>">
-                            <div class="ledger-row grid grid-cols-[1fr_auto_auto_auto] gap-4 px-5 py-4 items-center cursor-pointer hover:bg-black/5 transition" onclick="document.getElementById('details-<?php echo $index; ?>').classList.toggle('hidden'); document.getElementById('chevron-<?php echo $index; ?>').classList.toggle('rotate-180')">
+                            <div class="ledger-row grid grid-cols-[1fr_auto_auto_auto] gap-4 px-5 py-4 items-center cursor-pointer hover-overlay-subtle transition" onclick="document.getElementById('details-<?php echo $index; ?>').classList.toggle('hidden'); document.getElementById('chevron-<?php echo $index; ?>').classList.toggle('rotate-180')">
                                 <div class="flex items-center gap-3 min-w-0">
                                     <?php if ($near): ?>
                                     <span class="seal flex-none"><i class="fas fa-check"></i></span>
@@ -91,23 +83,43 @@
                                 </div>
                                 <span class="w-16 text-right text-sm font-semibold" style="color: <?php echo $statusColor; ?>;"><?php echo $statusWord; ?></span>
                             </div>
-                            <div id="details-<?php echo $index; ?>" class="hidden px-14 py-4 bg-black/5 border-b border-ui text-sm">
+                            <div id="details-<?php echo $index; ?>" class="hidden px-14 py-4 bg-overlay-subtle border-b border-ui text-sm">
                                 <h4 class="font-semibold mb-1">Project Description</h4>
                                 <p class="text-muted-ui mb-3"><?php echo htmlspecialchars($g['desc'] ?? 'No description provided.'); ?></p>
                                 <div class="flex justify-between items-end">
                                     <div>
                                         <h4 class="font-semibold mb-1">Team Members</h4>
-                                        <ul class="list-disc list-inside text-muted-ui">
+                                        <ul class="list-disc list-inside text-muted-ui mb-4">
                                             <?php foreach ($g['member_names'] ?? [] as $member): ?>
                                                 <li><?php echo htmlspecialchars($member); ?></li>
                                             <?php endforeach; ?>
                                         </ul>
+                                        
+                                        <h4 class="font-semibold mb-1">Assigned Mentor</h4>
+                                        <?php if (!empty($viewData['isCoordinator'])): ?>
+                                        <div class="flex gap-2 items-center mb-4">
+                                            <form method="POST" action="assign_mentor.php" class="flex gap-2 items-center">
+                                                <input type="hidden" name="project_id" value="<?php echo $g['id']; ?>">
+                                                <input type="hidden" name="classroom_id" value="<?php echo htmlspecialchars($viewData['classroom_id']); ?>">
+                                                <select name="mentor_id" class="form-input text-xs py-1 px-2" style="width: auto;">
+                                                    <option value="">-- No Mentor --</option>
+                                                    <?php foreach ($viewData['availableMentors'] ?? [] as $mentor): ?>
+                                                        <option value="<?php echo $mentor['id']; ?>" <?php echo ($g['mentor_id'] == $mentor['id']) ? 'selected' : ''; ?>>
+                                                            <?php echo htmlspecialchars($mentor['username']); ?>
+                                                        </option>
+                                                    <?php endforeach; ?>
+                                                </select>
+                                                <button type="submit" class="btn-ui px-3 py-1 text-xs hover-overlay-medium transition" style="color: var(--accent); border-color: var(--accent);">Assign</button>
+                                            </form>
+                                        </div>
+                                        <?php else: ?>
+                                        <p class="text-muted-ui text-sm mb-4">
+                                            <?php echo !empty($g['mentor_name']) ? htmlspecialchars($g['mentor_name']) : 'Unassigned'; ?>
+                                        </p>
+                                        <?php endif; ?>
                                     </div>
-                                    <?php if ($viewData['isDemo']): ?>
-                                      <a href="dashboard.php?classroom_id=demo&demo_view=TeacherDrilldown"
-                                      <?php else: ?>
-                                      <a href="dashboard.php?project_id=<?php echo $g['id']; ?>&classroom_id=<?php echo urlencode($viewData['classroom_id']); ?><?php echo !empty($viewData['isDemo']) ? '&demo_view=TeacherDrilldown' : ''; ?>"
-                                      <?php endif; ?> class="btn-ui px-4 py-2 text-xs font-semibold hover:bg-black/10 transition" style="color: var(--accent); border-color: var(--accent);">
+                                    <?php ?>
+                                      <a href="dashboard.php?project_id=<?php echo $g['id']; ?>&classroom_id=<?php echo urlencode($viewData['classroom_id']); ?>" class="btn-ui px-4 py-2 text-xs font-semibold hover-overlay-medium transition" style="color: var(--accent); border-color: var(--accent);">
                                         View Full Report <i class="fas fa-arrow-right ml-1"></i>
                                     </a>
                                 </div>
@@ -123,27 +135,74 @@
                 <div class="flex justify-between items-end mb-4">
                     <div>
                         <h2 class="text-2xl font-head font-semibold"><?php echo htmlspecialchars($viewData['classroomName'] ?? 'Classroom'); ?></h2>
-                        <p class="text-muted-ui text-sm mt-1">Invite Code: <span class="font-mono-ui font-semibold px-2 py-1 bg-black/5 rounded"><?php echo htmlspecialchars($viewData['inviteCode'] ?? 'XXXXXX'); ?></span></p>
+                        <p class="text-muted-ui text-sm mt-1">Invite Code: <span class="font-mono-ui font-semibold px-2 py-1 bg-overlay-subtle rounded"><?php echo htmlspecialchars($viewData['inviteCode'] ?? 'XXXXXX'); ?></span></p>
                     </div>
-                    <?php if ($viewData['isDemo']): ?>
-                    <button onclick="simulateJoins()" class="btn-ui px-4 py-2 text-xs font-semibold hover:bg-black/10 transition flex items-center gap-2" style="color: var(--accent); border-color: var(--accent);">
-                        <i class="fas fa-play"></i> Simulate Joins
-                    </button>
-                    <?php else: ?>
-                    <button onclick="copyInviteCode()" class="btn-ui px-4 py-2 text-xs font-semibold hover:bg-black/10 transition flex items-center gap-2" style="color: var(--accent); border-color: var(--accent);">
+                    
+                    <button onclick="copyInviteCode()" class="btn-ui px-4 py-2 text-xs font-semibold hover-overlay-medium transition flex items-center gap-2" style="color: var(--accent); border-color: var(--accent);">
                         <i class="fas fa-copy"></i> Copy Invite Code
                     </button>
-                    <?php endif; ?>
+                    
                 </div>
                 
+                <div class="card p-5 mb-6">
+                    <div class="flex justify-between items-center border-b border-ui pb-2 mb-4">
+                        <h3 class="font-semibold text-lg font-head">Faculty & Mentors</h3>
+                    </div>
+                    <?php if (!empty($viewData['isCoordinator'])): ?>
+                    <form method="POST" action="add_mentor_to_classroom.php" class="flex gap-3 mb-6">
+                        <input type="hidden" name="classroom_id" value="<?php echo htmlspecialchars($viewData['classroom_id']); ?>">
+                        <input type="text" name="mentor_username" class="form-input flex-1" placeholder="Enter faculty username to invite as Mentor..." required>
+                        <button type="submit" class="btn-ui px-4 py-2 font-semibold hover:opacity-90 transition" style="background: var(--accent-2); color: var(--bg);">
+                            Add Mentor
+                        </button>
+                    </form>
+                    <?php endif; ?>
+
+                    <div class="flex flex-col gap-3">
+                        <?php foreach ($viewData['availableMentors'] ?? [] as $mentor): ?>
+                            <div class="flex items-center gap-3">
+                                <div class="w-8 h-8 rounded-full flex items-center justify-center font-bold text-xs" style="background: var(--accent-2); color: var(--bg);">
+                                    <?php echo strtoupper(substr($mentor['username'], 0, 1)); ?>
+                                </div>
+                                <div>
+                                    <div class="font-semibold text-sm"><?php echo htmlspecialchars($mentor['username']); ?></div>
+                                    <div class="text-xs text-muted-ui font-mono-ui uppercase tracking-wider">Admin / Mentor</div>
+                                </div>
+                            </div>
+                        <?php endforeach; ?>
+                    </div>
+                </div>
+
                 <div class="card p-5">
+                    <h3 class="font-semibold text-lg font-head border-b border-ui pb-2 mb-4">Students</h3>
                     <div class="grid grid-cols-[auto_1fr_auto] gap-4 text-xs font-semibold text-muted-ui font-mono-ui border-b border-ui pb-2">
                         <span class="w-8"></span><span>Student Info</span><span>Status</span>
                     </div>
                     <div id="live-roster-list" class="flex flex-col mt-2">
-                        <div class="py-6 text-center text-muted-ui text-sm italic" id="empty-roster-state">
-                            Waiting for students to join via code...
-                        </div>
+                        <?php if (empty($viewData['classroomRoster'])): ?>
+                            <div class="py-6 text-center text-muted-ui text-sm italic" id="empty-roster-state">
+                                No students have joined this classroom yet.
+                            </div>
+                        <?php else: ?>
+                            <?php foreach ($viewData['classroomRoster'] as $student): ?>
+                                <div class="grid grid-cols-[auto_1fr_auto] gap-4 py-3 border-b border-ui items-center view-pane">
+                                    <div class="w-8 h-8 rounded-full flex items-center justify-center font-bold text-xs" style="background: var(--accent); color: var(--bg);">
+                                        <?php echo strtoupper(substr($student['username'], 0, 1)); ?>
+                                    </div>
+                                    <div>
+                                        <div class="font-semibold text-sm"><?php echo htmlspecialchars($student['username']); ?></div>
+                                        <div class="text-xs text-muted-ui font-mono-ui tracking-wide"><?php echo htmlspecialchars($student['usn'] ?? 'No USN'); ?></div>
+                                    </div>
+                                    <div>
+                                        <?php if ($student['project_name']): ?>
+                                            <span class="badge badge-green text-[10px] uppercase tracking-wider">In <?php echo htmlspecialchars($student['project_name']); ?></span>
+                                        <?php else: ?>
+                                            <span class="px-2 py-1 text-[10px] font-semibold rounded uppercase tracking-wider bg-overlay-medium text-muted-ui">Unassigned</span>
+                                        <?php endif; ?>
+                                    </div>
+                                </div>
+                            <?php endforeach; ?>
+                        <?php endif; ?>
                     </div>
                 </div>
             </div>
@@ -166,4 +225,4 @@
                 });
             }
         </script>
-        
+

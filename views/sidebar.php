@@ -1,4 +1,4 @@
-﻿        <!-- Right: analytics sidebar (Student / Leader only) -->
+<!-- Right: analytics sidebar (Student / Leader only) -->
         <div class="flex flex-col gap-6 h-full min-h-0">
             <!-- Contribution Tracker -->
             <div class="card p-5 shrink-0" style="border-top: 2px solid var(--accent-2);">
@@ -42,7 +42,7 @@
                     <button id="btn-side-audit" onclick="switchSideTab('audit')" class="flex-1 py-3 text-xs font-semibold text-center border-b-2 transition" style="border-color: var(--accent); color: var(--accent);">
                         <i class="fas fa-history mr-1"></i> Audit Log
                     </button>
-                    <button id="btn-side-files" onclick="switchSideTab('files')" class="flex-1 py-3 text-xs font-semibold text-center border-b-2 border-transparent text-muted-ui hover:text-white transition">
+                    <button id="btn-side-files" onclick="switchSideTab('files')" class="flex-1 py-3 text-xs font-semibold text-center border-b-2 border-transparent text-muted-ui hover:text-accent-2 transition">
                         <i class="fas fa-folder mr-1"></i> Deliverables
                     </button>
                 </div>
@@ -81,7 +81,7 @@
                 <div id="tab-side-files" class="flex-1 overflow-y-auto p-4 space-y-3 hidden">
                     <?php if (!empty($viewData['deliverables'])): ?>
                         <?php foreach ($viewData['deliverables'] as $file): ?>
-                        <div class="flex items-center justify-between p-2 rounded border border-ui hover:border-accent transition" style="background: rgba(0,0,0,0.2);">
+                        <div class="flex items-center justify-between p-2 rounded border border-ui hover:border-accent transition bg-overlay-subtle">
                             <div class="flex items-center gap-3 overflow-hidden">
                                 <div class="w-8 h-8 rounded bg-panel flex items-center justify-center flex-shrink-0 text-accent">
                                     <i class="fas fa-file-alt"></i>
@@ -91,7 +91,7 @@
                                     <span class="block text-xs text-muted-ui truncate">by <?php echo htmlspecialchars($file['uploader_name']); ?></span>
                                 </div>
                             </div>
-                            <a href="<?php echo htmlspecialchars($file['file_path']); ?>" download class="text-muted-ui hover:text-white ml-2"><i class="fas fa-download"></i></a>
+                            <a href="<?php echo htmlspecialchars($file['file_path']); ?>" download class="text-muted-ui hover:text-accent-2 ml-2"><i class="fas fa-download"></i></a>
                         </div>
                         <?php endforeach; ?>
                     <?php else: ?>

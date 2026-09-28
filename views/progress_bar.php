@@ -15,5 +15,5 @@
     <?php endif; ?>
 
     <!-- Main workspace -->
-    <div class="flex-1 p-6 grid grid-cols-4 gap-6">
+    <div class="flex-1 p-6 grid grid-cols-1 lg:grid-cols-4 gap-6">
 

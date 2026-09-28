@@ -1,4 +1,4 @@
-        <!-- ============================================================ -->
+<!-- ============================================================ -->
         <!-- MARKETPLACE — Unassigned Student View                         -->
         <!-- ============================================================ -->
         <div class="col-span-4 flex flex-col h-full">
@@ -36,14 +36,14 @@
                             <i class="fas fa-users"></i> <?php echo (int)$proj['active_members']; ?> members
                         </div>
                         <?php if ($isPending): ?>
-                        <button class="px-4 py-1.5 text-xs font-semibold rounded bg-black/10 cursor-not-allowed opacity-70" disabled>
+                        <button class="px-4 py-1.5 text-xs font-semibold rounded bg-overlay-medium cursor-not-allowed opacity-70" disabled>
                             <i class="fas fa-clock mr-1"></i> Pending
                         </button>
                         <?php else: ?>
                         <form method="POST" action="request_join.php">
                             <input type="hidden" name="classroom_id" value="<?php echo htmlspecialchars($viewData['classroom_id']); ?>">
                             <input type="hidden" name="project_id" value="<?php echo $proj['id']; ?>">
-                            <button type="submit" class="btn-ui px-4 py-1.5 text-xs font-semibold hover:bg-black/10 transition" style="color: var(--accent); border-color: var(--accent);">
+                            <button type="submit" class="btn-ui px-4 py-1.5 text-xs font-semibold hover-overlay-medium transition" style="color: var(--accent); border-color: var(--accent);">
                                 Request to Join
                             </button>
                         </form>
@@ -54,4 +54,3 @@
             </div>
             <?php endif; ?>
         </div>
-

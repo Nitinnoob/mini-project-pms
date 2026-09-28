@@ -5,14 +5,25 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>PMS - <?php echo htmlspecialchars($viewData['actualView']); ?> view</title>
+    <script>
+        // Apply saved theme before anything paints, so there's no flash
+        // of light mode for users who've chosen dark. Manual toggle only —
+        // no system-preference auto-detect.
+        (function () {
+            try {
+                if (localStorage.getItem('pms-theme') === 'dark') {
+                    document.documentElement.classList.add('dark');
+                }
+            } catch (e) {}
+        })();
+    </script>
+    <script>tailwind.config = { darkMode: 'class' }</script>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Sans+Condensed:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Serif:wght@400;600;700&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
-    <script>tailwind.config = { darkMode: 'class' }</script>
     <link rel="stylesheet" href="syncspace.css">
 </head>
 
@@ -39,6 +50,9 @@
         </div>
 
         <div class="flex items-center gap-5 text-sm">
+            <button id="themeToggleBtn" onclick="toggleTheme()" class="theme-toggle-btn" aria-label="Toggle dark mode">
+                <i id="themeToggleIcon" class="fas fa-moon"></i>
+            </button>
             <button class="text-muted-ui hover:text-accent transition" aria-label="Notifications"><i class="fas fa-bell"></i></button>
             <div class="flex items-center gap-2">
                 <span class="font-semibold"><?php echo $username; ?></span>
@@ -48,3 +62,17 @@
         </div>
     </nav>
 
+    <script>
+        function toggleTheme() {
+            const isDark = document.documentElement.classList.toggle('dark');
+            try { localStorage.setItem('pms-theme', isDark ? 'dark' : 'light'); } catch (e) {}
+            const icon = document.getElementById('themeToggleIcon');
+            if (icon) icon.className = isDark ? 'fas fa-sun' : 'fas fa-moon';
+            window.dispatchEvent(new Event('themeToggled'));
+        }
+        (function () {
+            const isDark = document.documentElement.classList.contains('dark');
+            const icon = document.getElementById('themeToggleIcon');
+            if (icon) icon.className = isDark ? 'fas fa-sun' : 'fas fa-moon';
+        })();
+    </script>

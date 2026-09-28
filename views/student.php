@@ -1,4 +1,4 @@
-        <!-- ============================================================ -->
+<!-- ============================================================ -->
         <!-- STUDENT — Workbench: kanban / calendar                        -->
         <!-- ============================================================ -->
         <div class="<?php echo $viewData['isNewlyCreated'] ? 'col-span-4' : 'col-span-3'; ?> flex flex-col h-full">
@@ -20,27 +20,11 @@
                 </div>
             </div>
 
-            <div id="kanban-view" class="view-pane grid grid-cols-3 gap-4 flex-1">
+            <div id="kanban-view" class="view-pane grid grid-cols-1 md:grid-cols-3 gap-4 flex-1">
                 <div class="card p-4 flex flex-col">
                     <h3 class="font-semibold mb-3 flex justify-between font-head">To do <span class="bg-raised border border-ui px-2 text-xs py-0.5" style="border-radius: var(--radius);"><?php echo count($viewData['tasks']["todo"] ?? []); ?></span></h3>
                     <div id="todo-list" class="flex-1 space-y-3 min-h-[200px]">
-                        <?php if ($viewData['isDemo']): ?>
-                        <div class="bg-raised border border-ui p-3 cursor-grab hover:opacity-90 transition shadow-sm" style="border-radius: var(--radius);">
-                            <div class="flex justify-between items-start mb-2">
-                                <span class="text-xs font-semibold px-2 py-1 font-mono-ui" style="background: rgba(69,208,195,.15); color: var(--accent-2); border-radius: var(--radius);">database</span>
-                                <i class="fas fa-grip-vertical text-muted-ui"></i>
-                            </div>
-                            <p class="text-sm font-medium">Resolve explicit cursor syntax in Oracle schema</p>
-                        </div>
-                        <div class="bg-raised border border-ui p-3 cursor-grab hover:opacity-90 transition shadow-sm" style="border-radius: var(--radius);">
-                            <div class="flex justify-between items-start mb-2">
-                                <span class="text-xs font-semibold px-2 py-1 font-mono-ui" style="background: rgba(242,169,59,.15); color: var(--accent); border-radius: var(--radius);">os-lab</span>
-                                <i class="fas fa-grip-vertical text-muted-ui"></i>
-                            </div>
-                            <p class="text-sm font-medium">Compile CPU scheduling algorithms</p>
-                            <div class="mt-2 text-xs text-danger font-semibold"><i class="far fa-clock me-1"></i>Due tomorrow</div>
-                        </div>
-                        <?php else: foreach (($viewData['tasks']['todo'] ?? []) as $task): ?>
+                        <?php foreach (($viewData['tasks']['todo'] ?? []) as $task): ?>
                         <div class="bg-raised border border-ui p-3 cursor-grab hover:opacity-90 transition shadow-sm" style="border-radius: var(--radius);" data-task-id="<?php echo $task['id']; ?>">
                             <div class="flex justify-between items-start mb-2">
                                 <span class="text-xs font-semibold px-2 py-1 font-mono-ui" style="background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius);"><?php echo htmlspecialchars($task['assigned_to'] ? ($task['assignee_name'] ?? 'Assigned') : 'Unassigned'); ?></span>
@@ -53,21 +37,13 @@
                                             <?php endif; ?>
                                         </div>
                         </div>
-                        <?php endforeach; endif; ?>
+                        <?php endforeach; ?>
                     </div>
                 </div>
                 <div class="card p-4 flex flex-col" style="border-top: 2px solid var(--accent-2);">
-                    <h3 class="font-semibold mb-3 flex justify-between font-head">In progress <span class="px-2 text-xs py-0.5" style="background: rgba(69,208,195,.15); color: var(--accent-2); border-radius: var(--radius);"><?php echo count($viewData['tasks']["inprogress"] ?? []); ?></span></h3>
+                    <h3 class="font-semibold mb-3 flex justify-between font-head">In progress <span class="badge badge-accent-2"><?php echo count($viewData['tasks']["inprogress"] ?? []); ?></span></h3>
                     <div id="inprogress-list" class="flex-1 space-y-3 min-h-[200px]">
-                        <?php if ($viewData['isDemo']): ?>
-                        <div class="bg-raised border border-ui p-3 cursor-grab hover:opacity-90 transition shadow-sm" style="border-radius: var(--radius); border-left: 2px solid var(--accent-2);">
-                            <div class="flex justify-between items-start mb-2">
-                                <span class="text-xs font-semibold px-2 py-1 font-mono-ui" style="background: rgba(242,169,59,.15); color: var(--accent); border-radius: var(--radius);">docs</span>
-                                <i class="fas fa-grip-vertical text-muted-ui"></i>
-                            </div>
-                            <p class="text-sm font-medium">Draft Phase 1 system architecture report</p>
-                        </div>
-                        <?php else: foreach (($viewData['tasks']['inprogress'] ?? []) as $task): ?>
+                        <?php foreach (($viewData['tasks']['inprogress'] ?? []) as $task): ?>
                         <div class="bg-raised border border-ui p-3 cursor-grab hover:opacity-90 transition shadow-sm" style="border-radius: var(--radius); border-left: 2px solid var(--accent-2);" data-task-id="<?php echo $task['id']; ?>">
                             <div class="flex justify-between items-start mb-2">
                                 <span class="text-xs font-semibold px-2 py-1 font-mono-ui" style="background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius);"><?php echo htmlspecialchars($task['assigned_to'] ? ($task['assignee_name'] ?? 'Assigned') : 'Unassigned'); ?></span>
@@ -80,21 +56,13 @@
                                             <?php endif; ?>
                                         </div>
                         </div>
-                        <?php endforeach; endif; ?>
+                        <?php endforeach; ?>
                     </div>
                 </div>
                 <div class="card p-4 flex flex-col" style="border-top: 2px solid var(--accent);">
-                    <h3 class="font-semibold mb-3 flex justify-between font-head">Done <span class="px-2 text-xs py-0.5" style="background: rgba(242,169,59,.15); color: var(--accent); border-radius: var(--radius);"><?php echo count($viewData['tasks']["done"] ?? []); ?></span></h3>
+                    <h3 class="font-semibold mb-3 flex justify-between font-head">Done <span class="badge badge-accent"><?php echo count($viewData['tasks']["done"] ?? []); ?></span></h3>
                     <div id="done-list" class="flex-1 space-y-3 min-h-[200px]">
-                        <?php if ($viewData['isDemo']): ?>
-                        <div class="bg-raised border border-ui p-3 cursor-grab opacity-60" style="border-radius: var(--radius);">
-                            <div class="flex justify-between items-start mb-2">
-                                <span class="text-xs font-semibold px-2 py-1 font-mono-ui text-muted-ui" style="background: rgba(127,127,127,.15); border-radius: var(--radius);">frontend</span>
-                                <i class="fas fa-check text-muted-ui"></i>
-                            </div>
-                            <p class="text-sm font-medium line-through">Design dark mode toggle</p>
-                        </div>
-                        <?php else: foreach (($viewData['tasks']['done'] ?? []) as $task): ?>
+                        <?php foreach (($viewData['tasks']['done'] ?? []) as $task): ?>
                         <div class="bg-raised border border-ui p-3 cursor-grab opacity-60" style="border-radius: var(--radius);" data-task-id="<?php echo $task['id']; ?>">
                             <div class="flex justify-between items-start mb-2">
                                 <span class="text-xs font-semibold px-2 py-1 font-mono-ui" style="background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius);"><?php echo htmlspecialchars($task['assigned_to'] ? ($task['assignee_name'] ?? 'Assigned') : 'Unassigned'); ?></span>
@@ -107,7 +75,7 @@
                                             <?php endif; ?>
                                         </div>
                         </div>
-                        <?php endforeach; endif; ?>
+                        <?php endforeach; ?>
                     </div>
                 </div>
             </div>
@@ -132,7 +100,7 @@
                         echo '<span class="text-xs font-semibold font-mono-ui ' . ($isToday ? 'text-accent-2' : 'text-muted-ui') . '">' . $d . '</span><div class="mt-1 space-y-1">';
                         if (isset($viewData['calendarTasks'][$d])) {
                             foreach ($viewData['calendarTasks'][$d] as $t) {
-                                $bg = $t['priority'] === 'high' ? 'rgba(239,100,97,.18)' : 'rgba(69,208,195,.18)';
+                                $bg = $t['priority'] === 'high' ? 'rgba(var(--danger-rgb), 0.18)' : 'rgba(var(--accent-2-rgb), 0.18)';
                                 $fg = $t['priority'] === 'high' ? 'var(--danger)' : 'var(--accent-2)';
                                 echo '<div class="cal-pill" style="background:' . $bg . '; color:' . $fg . ';" title="' . htmlspecialchars($t['title']) . '">' . htmlspecialchars($t['title']) . '</div>';
                             }
@@ -146,4 +114,5 @@
 
 
 </div>
+
 
