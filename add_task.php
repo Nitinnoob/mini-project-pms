@@ -12,6 +12,7 @@ $title = trim($_POST['title'] ?? '');
 $assigned_to = !empty($_POST['assigned_to']) ? $_POST['assigned_to'] : null;
 $priority = $_POST['priority'] ?? 'normal';
 $milestone = $_POST['milestone'] ?? 'Synopsis';
+$due_date = !empty($_POST['due_date']) ? $_POST['due_date'] : null;
 
 if ($project_id && !empty($title)) {
     // Validate that the user actually belongs to this project
@@ -19,8 +20,8 @@ if ($project_id && !empty($title)) {
     $stmtCheck->execute([$project_id, $_SESSION['user_id']]);
     
     if ($stmtCheck->fetch()) {
-        $stmt = $pdo->prepare("INSERT INTO tasks (project_id, title, assigned_to, priority, milestone, status) VALUES (?, ?, ?, ?, ?, 'todo')");
-        $stmt->execute([$project_id, $title, $assigned_to, $priority, $milestone]);
+        $stmt = $pdo->prepare("INSERT INTO tasks (project_id, title, assigned_to, priority, milestone, due_date, status) VALUES (?, ?, ?, ?, ?, ?, 'todo')");
+        $stmt->execute([$project_id, $title, $assigned_to, $priority, $milestone, $due_date]);
         
         $stmtLog = $pdo->prepare("INSERT INTO activity_log (project_id, user_id, action, details) VALUES (?, ?, 'Created Task', ?)");
         $stmtLog->execute([$project_id, $_SESSION['user_id'], "Created task: " . $title]);

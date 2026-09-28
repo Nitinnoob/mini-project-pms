@@ -171,12 +171,33 @@ if ($viewData['progressPercent'] === 0) {
 }
 
 // 2. Calendar and Team Data
-$today = new DateTime();
-$daysInMonth = (int) $today->format('t');
-$firstOfMonth = new DateTime($today->format('Y-m-01'));
-$startWeekday = (int) $firstOfMonth->format('N');
-$todayNum = (int) $today->format('j');
-$viewData['monthLabel'] = $today->format('F Y');
+$calYear = isset($_GET['year']) ? (int)$_GET['year'] : (int)date('Y');
+$calMonth = isset($_GET['month']) ? (int)$_GET['month'] : (int)date('n');
+if ($calMonth < 1) { $calMonth = 12; $calYear--; }
+if ($calMonth > 12) { $calMonth = 1; $calYear++; }
+
+$calDate = new DateTime(sprintf('%04d-%02d-01', $calYear, $calMonth));
+$daysInMonth = (int) $calDate->format('t');
+$startWeekday = (int) $calDate->format('N');
+$todayNum = (int) date('j');
+$isCurrentMonth = ($calYear === (int)date('Y') && $calMonth === (int)date('n'));
+
+$viewData['monthLabel'] = $calDate->format('F Y');
+$viewData['isCurrentMonth'] = $isCurrentMonth;
+$viewData['todayNum'] = $todayNum;
+$viewData['startWeekday'] = $startWeekday;
+$viewData['daysInMonth'] = $daysInMonth;
+
+// Generate prev/next month navigation URLs
+$prevMonth = $calMonth - 1; $prevYear = $calYear;
+if ($prevMonth < 1) { $prevMonth = 12; $prevYear--; }
+$nextMonth = $calMonth + 1; $nextYear = $calYear;
+if ($nextMonth > 12) { $nextMonth = 1; $nextYear++; }
+
+$baseCalUrl = "dashboard.php?classroom_id=" . urlencode($viewData['classroom_id']) . (!empty($viewData['myProjectId']) ? "&project_id=" . $viewData['myProjectId'] : "");
+$viewData['prevMonthUrl'] = $baseCalUrl . "&month=$prevMonth&year=$prevYear&view=calendar";
+$viewData['nextMonthUrl'] = $baseCalUrl . "&month=$nextMonth&year=$nextYear&view=calendar";
+$viewData['activeBoardView'] = (isset($_GET['view']) && $_GET['view'] === 'calendar') ? 'calendar' : 'kanban';
 
 $viewData['calendarTasks'] = [];
 $viewData['teamRoster'] = [];
@@ -205,7 +226,7 @@ $viewData['daysToDeadline'] = 3;
             if (!empty($t['due_date'])) {
                 try {
                     $due = new DateTime($t['due_date']);
-                    if ($due->format('m') === $today->format('m')) {
+                    if ($due->format('Y-m') === $calDate->format('Y-m')) {
                         $viewData['calendarTasks'][(int)$due->format('j')][] = [
                             'title' => $t['title'],
                             'priority' => $t['priority']

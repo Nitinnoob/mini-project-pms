@@ -59,6 +59,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Sans+Condensed:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Serif:wght@400;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="syncspace.css">
+    <script>
+        (function () {
+            try {
+                if (localStorage.getItem('pms-theme') === 'dark') {
+                    document.documentElement.classList.add('dark');
+                }
+            } catch (e) {}
+        })();
+    </script>
 </head>
 <body class="min-h-screen flex flex-col">
 
@@ -71,6 +80,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <h1 class="font-bold text-xl tracking-tight font-head">PMS</h1>
         </a>
         <div class="flex items-center gap-5 text-sm">
+            <button id="themeToggleBtn" onclick="toggleTheme()" class="theme-toggle-btn" aria-label="Toggle dark mode">
+                <i id="themeToggleIcon" class="fas fa-moon"></i>
+            </button>
             <span class="font-semibold"><?php echo $username; ?></span>
             <div class="h-8 w-8 rounded-full flex items-center justify-center font-bold text-bg bg-accent-2"><?php echo $initial; ?></div>
         </div>
@@ -110,5 +122,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             </form>
         </div>
     </div>
+    <script src="assets/js/theme.js"></script>
 </body>
 </html>

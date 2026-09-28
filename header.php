@@ -9,6 +9,15 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="syncspace.css">
+    <script>
+        (function () {
+            try {
+                if (localStorage.getItem('pms-theme') === 'dark') {
+                    document.documentElement.classList.add('dark');
+                }
+            } catch (e) {}
+        })();
+    </script>
     <style>
         html, body { height: 100%; margin: 0; }
         body { display: flex; }
@@ -120,6 +129,10 @@
 </script>
 
 <div class="auth-shell">
+    <button id="themeToggleBtn" onclick="toggleTheme()" class="theme-toggle-btn" style="position: absolute; top: 1.5rem; right: 1.5rem; z-index: 50;" aria-label="Toggle dark mode">
+        <i id="themeToggleIcon" class="fas fa-moon"></i>
+    </button>
+    <script src="assets/js/theme.js"></script>
     <div class="auth-brand">
         <div class="ghost-card gc1"></div>
         <div class="ghost-card gc2"></div>

@@ -46,6 +46,15 @@ foreach ($workspaces as $row) {
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Sans+Condensed:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Serif:wght@400;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="syncspace.css">
+    <script>
+        (function () {
+            try {
+                if (localStorage.getItem('pms-theme') === 'dark') {
+                    document.documentElement.classList.add('dark');
+                }
+            } catch (e) {}
+        })();
+    </script>
 </head>
 <body class="min-h-screen flex flex-col">
 
@@ -58,6 +67,9 @@ foreach ($workspaces as $row) {
             <h1 class="font-bold text-xl tracking-tight">PMS</h1>
         </div>
         <div class="flex items-center gap-5 text-sm">
+            <button id="themeToggleBtn" onclick="toggleTheme()" class="theme-toggle-btn" aria-label="Toggle dark mode">
+                <i id="themeToggleIcon" class="fas fa-moon"></i>
+            </button>
             <div class="flex items-center gap-2">
                 <span class="font-semibold"><?php echo $username; ?></span>
                 <div class="h-8 w-8 rounded-full flex items-center justify-center font-bold" style="background: var(--accent-2); color: var(--bg);"><?php echo $initial; ?></div>
@@ -127,5 +139,6 @@ foreach ($workspaces as $row) {
             setTimeout(() => toast.classList.add('translate-y-8', 'opacity-0'), 3000);
         }
     </script>
+<script src="assets/js/theme.js"></script>
 </body>
 </html>
