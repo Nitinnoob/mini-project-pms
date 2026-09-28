@@ -22,30 +22,38 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $stmtCheck->execute([$title, $_SESSION['user_id']]);
     $existing = $stmtCheck->fetch(PDO::FETCH_ASSOC);
     
+    $start_date = !empty($_POST['start_date']) ? $_POST['start_date'] : null;
+    $end_date = !empty($_POST['end_date']) ? $_POST['end_date'] : null;
+
     if ($existing) {
         $errorMessage = "You have already created a classroom named '" . htmlspecialchars($title) . "'.";
         $existingClassroomId = $existing['id'];
+    } elseif ($start_date && $end_date && strtotime($start_date) > strtotime($end_date)) {
+        $errorMessage = "The project end date cannot be earlier than the start date.";
     } else {
         try {
-        $pdo->beginTransaction();
-        
-        $requires_usn = isset($_POST['requires_usn']) ? 1 : 0;
-        $invite_code = substr(str_shuffle('0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ'), 0, 6);
-        $stmt = $pdo->prepare("INSERT INTO classrooms (name, created_by, invite_code, requires_usn) VALUES (?, ?, ?, ?)");
-        $stmt->execute([$title, $_SESSION['user_id'], $invite_code, $requires_usn]);
-        
-        $classroom_id = $pdo->lastInsertId();
-        
-        // Insert creator into classroom_members as Admin
-        $stmt3 = $pdo->prepare("INSERT INTO classroom_members (classroom_id, user_id, role) VALUES (?, ?, ?)");
-        $stmt3->execute([$classroom_id, $_SESSION['user_id'], $user_role]);
-        
-        $pdo->commit();
-        $successMessage = true;
-    } catch (Exception $e) {
-        $pdo->rollBack();
-        $errorMessage = "Database error: Could not create classroom.";
-    }
+            $pdo->beginTransaction();
+            
+            $requires_usn = isset($_POST['requires_usn']) ? 1 : 0;
+            $min_size = isset($_POST['min_team_size']) ? max(1, (int)$_POST['min_team_size']) : 1;
+            $max_size = isset($_POST['max_team_size']) ? max($min_size, (int)$_POST['max_team_size']) : 10;
+            
+            $invite_code = substr(str_shuffle('0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ'), 0, 6);
+            $stmt = $pdo->prepare("INSERT INTO classrooms (name, created_by, invite_code, requires_usn, min_team_size, max_team_size, start_date, end_date) VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
+            $stmt->execute([$title, $_SESSION['user_id'], $invite_code, $requires_usn, $min_size, $max_size, $start_date, $end_date]);
+            
+            $classroom_id = $pdo->lastInsertId();
+            
+            // Insert creator into classroom_members as Admin
+            $stmt3 = $pdo->prepare("INSERT INTO classroom_members (classroom_id, user_id, role) VALUES (?, ?, ?)");
+            $stmt3->execute([$classroom_id, $_SESSION['user_id'], $user_role]);
+            
+            $pdo->commit();
+            $successMessage = true;
+        } catch (Exception $e) {
+            $pdo->rollBack();
+            $errorMessage = "Database error: Could not create classroom.";
+        }
     }
 }
 ?>
@@ -100,7 +108,32 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     <input type="text" name="classroom_name" class="form-input" placeholder="e.g. 5th Sem CS Mini-Projects" required>
                 </div>
 
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-semibold mb-2">Min Team Size</label>
+                        <input type="number" name="min_team_size" class="form-input" value="1" min="1" required>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-semibold mb-2">Max Team Size</label>
+                        <input type="number" name="max_team_size" class="form-input" value="10" min="1" required>
+                    </div>
+                </div>
 
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-semibold mb-2">Project Start Date</label>
+                        <input type="date" name="start_date" class="form-input" required>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-semibold mb-2">Project End Date</label>
+                        <input type="date" name="end_date" class="form-input" required>
+                    </div>
+                </div>
+
+                <div class="flex items-center gap-3">
+                    <input type="checkbox" id="requires_usn" name="requires_usn" class="w-4 h-4" style="accent-color: var(--accent-2);">
+                    <label for="requires_usn" class="text-sm font-semibold cursor-pointer">Require students to provide a valid VTU USN to join</label>
+                </div>
 
                 <div class="flex justify-end gap-3 pt-6 border-t border-ui mt-8">
                     <a href="dashboard.php" class="px-6 py-2 text-sm font-semibold transition" style="color: var(--muted);">Cancel</a>

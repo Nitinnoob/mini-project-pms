@@ -1,4 +1,4 @@
-﻿<?php
+<?php
 session_start();
 if (!isset($_SESSION['user_id'])) {
     header("Location: login.php");
@@ -23,12 +23,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         
         if ($stmtCheck->fetch()) {
             if ($action === 'accept') {
-                // Check if the project already has 4 active members
+                // Fetch the classroom's configured max team size
+                $stmtMax = $pdo->prepare("SELECT c.max_team_size FROM classrooms c JOIN projects p ON p.classroom_id = c.id WHERE p.id = ?");
+                $stmtMax->execute([$project_id]);
+                $maxSize = $stmtMax->fetchColumn();
+                if ($maxSize === false) $maxSize = 10; // Fallback for classrooms created before this column existed
+
+                // Check if the project already has max active members
                 $stmtCount = $pdo->prepare("SELECT COUNT(*) FROM project_members WHERE project_id = ? AND join_status = 'Active'");
                 $stmtCount->execute([$project_id]);
                 $count = $stmtCount->fetchColumn();
                 
-                if ($count < 4) {
+                if ($count < $maxSize) {
                     $stmtUpdate = $pdo->prepare("UPDATE project_members SET join_status = 'Active' WHERE project_id = ? AND user_id = ? AND join_status = 'Pending'");
                     $stmtUpdate->execute([$project_id, $target_user_id]);
                 }

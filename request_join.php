@@ -25,9 +25,31 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $stmtCheck->execute([$project_id, $_SESSION['user_id']]);
             
             if (!$stmtCheck->fetch()) {
-                // Insert join request
-                $stmtInsert = $pdo->prepare("INSERT INTO project_members (project_id, user_id, is_leader, join_status) VALUES (?, ?, 0, 'Pending')");
-                $stmtInsert->execute([$project_id, $_SESSION['user_id']]);
+                // Check if the student is already active/pending in another project in this classroom
+                $stmtExisting = $pdo->prepare("
+                    SELECT 1 FROM project_members pm
+                    JOIN projects p ON pm.project_id = p.id
+                    WHERE p.classroom_id = ? AND pm.user_id = ? AND pm.join_status IN ('Active', 'Pending')
+                ");
+                $stmtExisting->execute([$classroom_id, $_SESSION['user_id']]);
+                
+                if (!$stmtExisting->fetch()) {
+                    // Check if the team is already full
+                    $stmtMax = $pdo->prepare("SELECT c.max_team_size FROM classrooms c WHERE c.id = ?");
+                    $stmtMax->execute([$classroom_id]);
+                    $maxSize = $stmtMax->fetchColumn();
+                    if ($maxSize === false) $maxSize = 10;
+                    
+                    $stmtCount = $pdo->prepare("SELECT COUNT(*) FROM project_members WHERE project_id = ? AND join_status = 'Active'");
+                    $stmtCount->execute([$project_id]);
+                    $activeCount = $stmtCount->fetchColumn();
+                    
+                    if ($activeCount < $maxSize) {
+                        // Insert join request
+                        $stmtInsert = $pdo->prepare("INSERT INTO project_members (project_id, user_id, is_leader, join_status) VALUES (?, ?, 0, 'Pending')");
+                        $stmtInsert->execute([$project_id, $_SESSION['user_id']]);
+                    }
+                }
             }
         }
         
