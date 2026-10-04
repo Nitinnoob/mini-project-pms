@@ -1,0 +1,17 @@
+# Dependencies
+node_modules/
+
+# User uploads and runtime files
+uploads/*
+!uploads/.htaccess
+!uploads/.gitkeep
+
+# Environment / local logs & temp files
+*.log
+scratch/
+
+# OS and Editor metadata
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/

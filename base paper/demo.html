@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PMS Trailer Demo</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {gray: {850: '#1f2937', 900: '#111827', 950: '#030712'}}
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            background-color: #030712;
+            color: #f9fafb;
+            font-family: 'Segoe UI', system-ui, sans-serif;
+        }
+
+        .glass-panel {
+            background: rgba(31, 41, 55, 0.7);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(55, 65, 81, 1);
+        }
+
+        .kanban-ghost {
+            opacity: 0.4;
+            background-color: #374151;
+        }
+
+        .kanban-drag {
+            transform: rotate(2deg);
+            cursor: grabbing !important;
+        }
+
+        /* Toast Animation */
+        #toast {
+            transition: transform 0.3s ease-out, opacity 0.3s ease-out;
+            transform: translateY(-100%);
+            opacity: 0;
+        }
+
+        #toast.show {
+            transform: translateY(0);
+            opacity: 1;
+        }
+    </style>
+</head>
+
+<body class="min-h-screen flex flex-col overflow-x-hidden">
+
+    <!-- Success Toast Notification -->
+    <div id="toast"
+        class="fixed top-5 left-1/2 transform -translate-x-1/2 z-50 glass-panel border-green-500 border-l-4 px-6 py-3 rounded-lg shadow-2xl flex items-center gap-3">
+        <i class="fas fa-check-circle text-green-400 text-xl"></i>
+        <div>
+            <h4 class="font-bold text-sm">Task Completed</h4>
+            <p class="text-xs text-gray-400">Weekly progress updated dynamically.</p>
+        </div>
+    </div>
+
+    <!-- Navbar -->
+    <nav class="glass-panel border-b-0 py-3 px-6 flex justify-between items-center sticky top-0 z-40">
+        <div class="flex items-center gap-4">
+            <div class="bg-gradient-to-br from-indigo-500 to-purple-600 text-white p-2 rounded-lg">
+                <i class="fas fa-layer-group"></i>
+            </div>
+            <h1 class="font-bold text-xl tracking-tight">PMS</h1>
+
+            <!-- Context Switcher -->
+            <select
+                class="ml-6 bg-gray-800 border border-gray-700 text-sm rounded-md px-3 py-1.5 focus:ring-indigo-500 outline-none cursor-pointer hover:bg-gray-700 transition">
+                <option>5th Sem CS Projects</option>
+                <option>Weekend Hackathon</option>
+                <option>Personal Sandbox</option>
+            </select>
+        </div>
+        <div class="flex items-center gap-4 text-sm">
+            <button class="text-gray-400 hover:text-white transition"><i class="fas fa-bell"></i></button>
+            <div class="h-8 w-8 rounded-full bg-indigo-500 flex items-center justify-center font-bold">N</div>
+        </div>
+    </nav>
+
+    <!-- Main Workspace -->
+    <div class="flex-1 p-6 grid grid-cols-1 lg:grid-cols-4 gap-6">
+
+        <!-- Left: Kanban Board (Takes up 3 columns) -->
+        <div class="lg:col-span-3 flex flex-col h-full">
+            <div class="flex justify-between items-end mb-4">
+                <div>
+                    <h2 class="text-2xl font-bold">Sprint 4: Core Architecture</h2>
+                    <p class="text-gray-400 text-sm mt-1">Due in 3 days. 65% completed.</p>
+                </div>
+                <div class="flex gap-2">
+                    <button
+                        class="bg-indigo-600 hover:bg-indigo-500 text-white px-4 py-2 rounded-md text-sm font-semibold shadow-lg shadow-indigo-500/30 transition">
+                        <i class="fas fa-magic me-2"></i>Generate Friday Wrap-Up
+                    </button>
+                    <button
+                        class="bg-red-900/50 hover:bg-red-800/80 border border-red-700 text-red-200 px-4 py-2 rounded-md text-sm font-semibold transition">
+                        <i class="fas fa-exclamation-triangle me-2"></i>Escalation Flare
+                    </button>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-3 gap-4 flex-1">
+                <!-- To Do -->
+                <div class="glass-panel rounded-xl p-4 flex flex-col">
+                    <h3 class="font-bold text-gray-300 mb-3 flex justify-between">To Do <span
+                            class="bg-gray-700 px-2 rounded text-xs py-0.5">2</span></h3>
+                    <div id="todo-list" class="flex-1 space-y-3 min-h-[200px]">
+                        <div
+                            class="bg-gray-800 border border-gray-700 p-3 rounded-lg cursor-grab hover:border-gray-500 transition shadow-sm">
+                            <div class="flex justify-between items-start mb-2">
+                                <span
+                                    class="text-xs font-semibold bg-blue-900/50 text-blue-300 px-2 py-1 rounded">Database</span>
+                                <i class="fas fa-grip-vertical text-gray-600"></i>
+                            </div>
+                            <p class="text-sm font-medium">Resolve explicit cursor syntax in Oracle schema</p>
+                        </div>
+                        <div
+                            class="bg-gray-800 border border-gray-700 p-3 rounded-lg cursor-grab hover:border-gray-500 transition shadow-sm">
+                            <div class="flex justify-between items-start mb-2">
+                                <span
+                                    class="text-xs font-semibold bg-purple-900/50 text-purple-300 px-2 py-1 rounded">OS
+                                    Lab</span>
+                                <i class="fas fa-grip-vertical text-gray-600"></i>
+                            </div>
+                            <p class="text-sm font-medium">Compile CPU Scheduling Algorithms</p>
+                            <div class="mt-2 text-xs text-red-400 font-semibold"><i class="far fa-clock me-1"></i>Due
+                                Tomorrow</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- In Progress -->
+                <div class="glass-panel rounded-xl p-4 flex flex-col border-t-2 border-t-indigo-500">
+                    <h3 class="font-bold text-gray-300 mb-3 flex justify-between">In Progress <span
+                            class="bg-indigo-900/50 text-indigo-300 px-2 rounded text-xs py-0.5">1</span></h3>
+                    <div id="inprogress-list" class="flex-1 space-y-3 min-h-[200px]">
+                        <div
+                            class="bg-gray-800 border border-gray-700 p-3 rounded-lg cursor-grab hover:border-gray-500 transition shadow-sm border-l-2 border-l-indigo-400">
+                            <div class="flex justify-between items-start mb-2">
+                                <span
+                                    class="text-xs font-semibold bg-yellow-900/50 text-yellow-300 px-2 py-1 rounded">Documentation</span>
+                                <i class="fas fa-grip-vertical text-gray-600"></i>
+                            </div>
+                            <p class="text-sm font-medium">Draft Phase 1 System Architecture Report</p>
+                            <div class="flex mt-3 -space-x-2">
+                                <img class="w-6 h-6 rounded-full border border-gray-800"
+                                    src="https://ui-avatars.com/api/?name=Nithin+G&background=4f46e5&color=fff">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Done -->
+                <div class="glass-panel rounded-xl p-4 flex flex-col border-t-2 border-t-green-500">
+                    <h3 class="font-bold text-gray-300 mb-3 flex justify-between">Done <span
+                            class="bg-green-900/50 text-green-300 px-2 rounded text-xs py-0.5">1</span></h3>
+                    <div id="done-list" class="flex-1 space-y-3 min-h-[200px]">
+                        <div class="bg-gray-800 border border-gray-700 p-3 rounded-lg cursor-grab opacity-60">
+                            <div class="flex justify-between items-start mb-2">
+                                <span
+                                    class="text-xs font-semibold bg-gray-700 text-gray-300 px-2 py-1 rounded">Frontend</span>
+                            </div>
+                            <p class="text-sm font-medium line-through text-gray-400">Design Multi-Tenant Dashboard UI
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right: Analytics & Feed (1 Column) -->
+        <div class="flex flex-col gap-6">
+
+            <!-- Free-Rider Analytics (Contribution) -->
+            <div class="glass-panel rounded-xl p-5 border-t-2 border-t-purple-500">
+                <h3 class="font-bold text-sm text-gray-300 mb-4 uppercase tracking-wider"><i
+                        class="fas fa-chart-pie me-2 text-purple-400"></i>Contribution Tracker</h3>
+                <div class="relative h-48 w-full">
+                    <canvas id="contributionChart"></canvas>
+                </div>
+            </div>
+
+            <!-- Live Activity Feed -->
+            <div class="glass-panel rounded-xl p-5 flex-1 flex flex-col">
+                <h3 class="font-bold text-sm text-gray-300 mb-4 uppercase tracking-wider"><i
+                        class="fas fa-satellite-dish me-2 text-blue-400"></i>Live Activity</h3>
+                <div id="activity-feed" class="space-y-4 overflow-hidden relative flex-1 text-sm">
+                    <!-- Javascript will populate this -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 1. Initialize Drag and Drop (Kanban)
+        const kanbanOptions = {
+            group: 'shared',
+            animation: 150,
+            ghostClass: 'kanban-ghost',
+            dragClass: 'kanban-drag',
+            onEnd: function (evt) {
+                // If dropped into the "Done" column, trigger the success toast
+                if (evt.to.id === 'done-list') {
+                    evt.item.classList.add('opacity-60');
+                    const text = evt.item.querySelector('p');
+                    if (text) {text.classList.add('line-through', 'text-gray-400');}
+
+                    const toast = document.getElementById('toast');
+                    toast.classList.add('show');
+                    setTimeout(() => toast.classList.remove('show'), 3000);
+                }
+            },
+            onRemove: function (evt) {
+                // Remove visual "Done" styling if moved back
+                if (evt.from.id === 'done-list') {
+                    evt.item.classList.remove('opacity-60');
+                    const text = evt.item.querySelector('p');
+                    if (text) {text.classList.remove('line-through', 'text-gray-400');}
+                }
+            }
+        };
+
+        new Sortable(document.getElementById('todo-list'), kanbanOptions);
+        new Sortable(document.getElementById('inprogress-list'), kanbanOptions);
+        new Sortable(document.getElementById('done-list'), kanbanOptions);
+
+        // 2. Initialize Contribution Chart
+        const ctx = document.getElementById('contributionChart').getContext('2d');
+        new Chart(ctx, {
+            type: 'doughnut',
+            data: {
+                labels: ['Nithin', 'Sarah', 'Mike (Slacking)'],
+                datasets: [{
+                    data: [55, 35, 10],
+                    backgroundColor: ['#4f46e5', '#8b5cf6', '#374151'],
+                    borderColor: '#1f2937',
+                    borderWidth: 2,
+                    hoverOffset: 4
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                cutout: '75%',
+                plugins: {
+                    legend: {position: 'bottom', labels: {color: '#9ca3af', usePointStyle: true, boxWidth: 6}}
+                }
+            }
+        });
+
+        // 3. Simulated Live Feed Logic
+        const feedEvents = [
+            {time: "Just now", icon: "fa-upload text-blue-400", text: "<span class='font-bold text-white'>Sarah</span> uploaded <span class='text-blue-300'>database_schema.sql</span>"},
+            {time: "2 mins ago", icon: "fa-check-double text-green-400", text: "Instructor approved <span class='font-bold text-white'>Phase 1 Report</span>"},
+            {time: "1 hr ago", icon: "fa-robot text-purple-400", text: "System: Deadline for <span class='font-bold text-white'>OS Lab</span> is in 24 hours."},
+            {time: "3 hrs ago", icon: "fa-code-commit text-gray-400", text: "<span class='font-bold text-white'>Nithin</span> moved a task to Review."}
+        ];
+
+        const feedContainer = document.getElementById('activity-feed');
+
+        // Populate initial feed
+        feedEvents.forEach((evt, index) => {
+            setTimeout(() => {
+                const el = document.createElement('div');
+                el.className = "flex gap-3 animate-[slideIn_0.3s_ease-out]";
+                el.innerHTML = `
+                    <div class="mt-1"><i class="fas ${evt.icon}"></i></div>
+                    <div>
+                        <p class="text-gray-300">${evt.text}</p>
+                        <span class="text-xs text-gray-500">${evt.time}</span>
+                    </div>
+                `;
+                feedContainer.prepend(el);
+            }, index * 800); // Stagger the rendering for a "live" feel when loading
+        });
+
+        // Add a fake incoming event after 5 seconds
+        setTimeout(() => {
+            const el = document.createElement('div');
+            el.className = "flex gap-3 transition-all duration-500 ease-out translate-y-[-20px] opacity-0";
+            el.innerHTML = `
+                <div class="mt-1"><i class="fas fa-comment-dots text-yellow-400"></i></div>
+                <div>
+                    <p class="text-gray-300">Prof. Sharma left a voice note on <span class='font-bold text-white'>Architecture Draft</span></p>
+                    <span class="text-xs text-gray-500">Just now</span>
+                </div>
+            `;
+            feedContainer.prepend(el);
+
+            // Trigger animation
+            requestAnimationFrame(() => {
+                el.classList.remove('translate-y-[-20px]', 'opacity-0');
+            });
+        }, 5000);
+    </script>
+</body>
+
+</html>

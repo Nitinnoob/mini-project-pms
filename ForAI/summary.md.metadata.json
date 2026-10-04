@@ -1,0 +1,5 @@
+{
+  "summary": "Complete session handoff document for starting a new conversation. Covers: project overview, full file map with what each file does, complete database schema (13 tables), all code changes made across two sessions (security patches, feature patches, mentor/weekly review system), detailed design decisions with rationale, the full code review with 3 critical bugs and 8 honorable mentions, user's workflow rules, and a prioritized list of what to fix next.",
+  "updatedAt": "2026-09-27T05:38:55.226433200Z",
+  "userFacing": true
+}

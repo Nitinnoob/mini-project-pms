@@ -1,0 +1,5 @@
+{
+  "summary": "Top 3 high-priority bugs found after Gemini's implementation of the mentor/weekly review system:\n1. Mentor Review button is permanently broken for non-coordinator mentors (missing mentor_id in drilldown query)\n2. Backend privilege escalation — any Admin can reassign mentors and invite faculty (bypassing coordinator-only UI guards)\n3. isCoordinator undefined in demo mode + missing null guards causing PHP warnings and un-demoable features\nAlso lists honorable mentions: cross-classroom IDOR, inverted date acceptance, approved-log overwrite, malformed HTML id.",
+  "updatedAt": "2026-09-27T05:27:25.150813700Z",
+  "userFacing": true
+}

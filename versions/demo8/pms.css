@@ -1,0 +1,202 @@
+@view-transition { navigation: auto; }
+
+        :root {
+            --radius: 8px;
+            color-scheme: dark;
+        }
+
+        /* ============ STUDENT — Workbench ============ */
+        [data-mode="student"] {
+            --bg: #12151d;
+            --bg-raised: #171b26;
+            --panel: #1a1f2b;
+            --panel-alt: #20263380;
+            --border: #2a3040;
+            --text: #e7e9ee;
+            --muted: #838ba0;
+            --accent: #f2a93b;
+            --accent-2: #45d0c3;
+            --danger: #ef6461;
+            --font-head: 'IBM Plex Sans', sans-serif;
+            --font-body: 'IBM Plex Sans', sans-serif;
+            --font-mono: 'IBM Plex Mono', monospace;
+            --radius: 8px;
+        }
+
+        /* ============ PROJECT LEADER — Control Room ============ */
+        [data-mode="leader"] {
+            --bg: #080b14;
+            --bg-raised: #0d1220;
+            --panel: #0f1626;
+            --panel-alt: #131b2e80;
+            --border: #1e2a44;
+            --text: #e5e9f5;
+            --muted: #6f7fa0;
+            --accent: #34d399;
+            --accent-2: #fbbf24;
+            --danger: #f04438;
+            --font-head: 'IBM Plex Sans Condensed', sans-serif;
+            --font-body: 'IBM Plex Sans', sans-serif;
+            --font-mono: 'IBM Plex Mono', monospace;
+            --radius: 4px;
+        }
+
+        /* ============ TEACHER — Marking Desk ============ */
+        [data-mode="teacher"] {
+            color-scheme: light;
+            --bg: #e4e2d6;
+            --bg-raised: #eae7db;
+            --panel: #eae7db;
+            --panel-alt: #ded9c9;
+            --border: #c7c2ac;
+            --text: #23261f;
+            --muted: #6b6a5a;
+            --accent: #3f6c51;
+            --accent-2: #a62639;
+            --danger: #a62639;
+            --font-head: 'IBM Plex Serif', serif;
+            --font-body: 'IBM Plex Sans', sans-serif;
+            --font-mono: 'IBM Plex Mono', monospace;
+            --radius: 2px;
+        }
+
+        html, body {
+            background: var(--bg);
+            color: var(--text);
+        }
+
+        body {
+            font-family: var(--font-body);
+        }
+
+        .font-head { font-family: var(--font-head); }
+        .font-mono-ui { font-family: var(--font-mono); }
+        .text-accent { color: var(--accent); }
+        .text-accent-2 { color: var(--accent-2); }
+        .text-danger { color: var(--danger); }
+        .text-muted-ui { color: var(--muted); }
+        .bg-panel { background: var(--panel); }
+        .bg-raised { background: var(--bg-raised); }
+        .border-ui { border-color: var(--border); }
+
+        .card {
+            background: var(--panel);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+        }
+
+        .btn-ui {
+            border-radius: var(--radius);
+            border: 1px solid var(--border);
+            font-family: var(--font-body);
+        }
+
+        /* Status dots (Leader roster) */
+        .status-dot { width: 9px; height: 9px; border-radius: 50%; display: inline-block; flex: none; }
+        .status-dot.green { background: #34d399; box-shadow: 0 0 6px rgba(52,211,153,.7); }
+        .status-dot.amber { background: #fbbf24; box-shadow: 0 0 6px rgba(251,191,36,.7); }
+        .status-dot.red   { background: #f04438; box-shadow: 0 0 6px rgba(240,68,56,.7); }
+
+        /* Progress bar, styled per mode */
+        .progress-track { background: rgba(127,127,127,0.18); border-radius: 999px; overflow: hidden; }
+        [data-mode="teacher"] .progress-track { background: rgba(0,0,0,0.08); border-radius: 2px; }
+        .progress-fill { transition: width 1s cubic-bezier(.4,0,.2,1); border-radius: inherit; }
+
+        @keyframes pulseNeon {
+            0%, 100% { filter: brightness(1); }
+            50%      { filter: brightness(1.35); }
+        }
+        [data-mode="student"] .progress-fill,
+        [data-mode="leader"] .progress-fill {
+            animation: pulseNeon 2.6s ease-in-out infinite;
+        }
+        [data-mode="teacher"] .progress-fill { animation: none; }
+
+        .status-behind { background: linear-gradient(90deg, #ef6461, #f2a93b); }
+        .status-ontrack { background: linear-gradient(90deg, #f2a93b, #45d0c3); }
+        .status-ahead   { background: linear-gradient(90deg, #34d399, #45d0c3); }
+        [data-mode="teacher"] .status-behind { background: #a62639; }
+        [data-mode="teacher"] .status-ontrack { background: #8a7f3f; }
+        [data-mode="teacher"] .status-ahead { background: #3f6c51; }
+
+        /* ---- Student: editor tab strip + toggle ---- */
+        .tab-btn { border-bottom: 2px solid transparent; font-family: var(--font-mono); font-size: .78rem; }
+        .tab-btn.active { border-bottom-color: var(--accent-2); color: var(--text); }
+        .tab-btn:not(.active) { color: var(--muted); }
+
+        .cal-pill {
+            font-size: .62rem; line-height: 1; padding: 3px 5px; border-radius: 4px;
+            font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+            font-family: var(--font-mono);
+        }
+        .cal-cell { min-height: 84px; }
+        .cal-cell.is-today { border-color: var(--accent-2) !important; box-shadow: inset 0 0 0 1px var(--accent-2); }
+
+        .view-pane { animation: fadeInPane .25s ease-out; }
+        @keyframes fadeInPane { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* ---- Leader: ticker + stat tiles ---- */
+
+
+        .stat-tile { border-top: 2px solid var(--border); }
+        .stat-tile.tone-red { border-top-color: var(--danger); }
+        .stat-tile.tone-amber { border-top-color: var(--accent-2); }
+        .stat-tile.tone-green { border-top-color: var(--accent); }
+        .stat-num { font-family: var(--font-head); font-weight: 600; letter-spacing: -0.01em; }
+
+        .roster-bar-track { background: rgba(127,127,127,.2); border-radius: 3px; overflow: hidden; }
+        .roster-bar-fill { border-radius: inherit; }
+
+        /* ---- Teacher: ledger rows ---- */
+        .ledger-row { border-bottom: 1px solid var(--border); }
+        .ledger-row:last-child { border-bottom: none; }
+        .ink-bar-track { background: rgba(0,0,0,.08); height: 6px; }
+        .ink-bar-fill { height: 100%; }
+        .seal {
+            width: 30px; height: 30px; border-radius: 50%; border: 2px solid var(--accent);
+            color: var(--accent); display: flex; align-items: center; justify-content: center;
+            font-size: .7rem; transform: rotate(-8deg);
+        }
+        .ledger-head-btn { border-bottom: 1px dashed var(--muted); }
+        .ledger-head-btn:hover { border-bottom-color: var(--text); }
+
+        /* ---- Heatmap ---- */
+        .heat-square { width: 11px; height: 11px; border-radius: 2px; }
+        @keyframes heatGlow { 0%, 100% { box-shadow: 0 0 2px rgba(129,140,248,.4); } 50% { box-shadow: 0 0 6px rgba(129,140,248,.9); } }
+        [data-mode="student"] .heat-glow, [data-mode="leader"] .heat-glow { animation: heatGlow 3s ease-in-out infinite; }
+
+        /* Toast */
+        #toast { transition: transform .3s ease-out, opacity .3s ease-out; transform: translateY(-100%); opacity: 0; }
+        #toast.show { transform: translateY(0); opacity: 1; }
+
+        /* Demo preview switcher */
+        .demo-switch-btn.active { background: var(--accent); color: #08110d; }
+
+        a:focus-visible, button:focus-visible, select:focus-visible {
+            outline: 2px solid var(--accent-2); outline-offset: 2px;
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            .progress-fill, .ticker-track, .heat-glow, .view-pane { animation: none !important; }
+        }
+
+        /* ---- Forms, Code Input & Overlays ---- */
+        .form-input { 
+            width:100%; background:var(--bg-raised); border:1px solid var(--border); color:var(--text);
+            border-radius:var(--radius); padding:.75rem 1rem; outline:none; transition:border-color .2s; 
+        }
+        .form-input:focus { border-color:var(--accent-2); }
+        .code-input { 
+            text-transform:uppercase; font-family:var(--font-mono); letter-spacing:2px; font-size:1.125rem; text-align:center; 
+        }
+
+        .success-overlay { 
+            position:fixed; inset:0; background:var(--bg); z-index:100; display:flex; flex-direction:column;
+            align-items:center; justify-content:center; opacity:0; pointer-events:none; transition:opacity .3s; 
+        }
+        .success-overlay.show { opacity:1; pointer-events:auto; }
+        @keyframes scaleIn { from { transform:scale(.5); opacity:0; } to { transform:scale(1); opacity:1; } }
+        .success-icon { animation:scaleIn .5s cubic-bezier(.175,.885,.32,1.275) forwards; }
+
+        a.card { transition:transform .2s, border-color .2s; }
+        a.card:hover { transform:translateY(-2px); border-color:var(--accent-2); }
