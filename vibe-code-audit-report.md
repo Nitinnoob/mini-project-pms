@@ -9,20 +9,20 @@
 
 ## Verification Results at a Glance
 
-| # | Issue | Verdict | Change vs. run `-01` |
+| # | Issue | Verdict | Resolution Status |
 | :-- | :--- | :--- | :--- |
-| 1 | Sidebar Audit Log / Deliverables never populated | ✅ **Confirmed** | Blueprint fixed: must use `LEFT JOIN` (nullable FKs) |
-| 2 | `create_subproject.php` has no guards | ✅ **Confirmed — worse than reported** | Also missing the classroom-membership and role check |
-| 3 | Kanban + Calendar duplicated in student/leader views | ✅ **Confirmed** | Exact line ranges corrected |
-| 4 | N+1 queries in teacher ledger | ✅ **Confirmed (partly mis-attributed)** | Weekly-log loop is in the *project* branch, not the teacher ledger |
-| 5 | `views/progress_bar.php` is a zombie that opens the layout grid | ✅ **Confirmed** | — |
-| 6 | Inverted `data-mode` on `join.php` / `create_classroom.php` | ✅ **Confirmed** | — |
-| 7 | Root `header.php` is really an auth shell | ✅ **Confirmed** | — |
-| 8 | Invite code uniqueness not checked | ⚠️ **Overstated** | Downgraded: the exception is caught and collisions are very unlikely |
-| 9 | Workspace not under Git | ✔️ **Resolved** | Fixed this session (`main`, baseline commit `b6cab33`) |
-| 10 | Documentation drift in `GEMINI.md` | ✅ **Confirmed — worse than reported** | The documented **Demo Mode does not exist** in the code |
+| 1 | Sidebar Audit Log / Deliverables never populated | ✅ **Fixed** | Populated with null-safe `LEFT JOIN users` in `dashboard.php` |
+| 2 | `create_subproject.php` has no guards | ✅ **Fixed** | Membership, student role, and 1-project invariant guards added |
+| 3 | Kanban + Calendar duplicated in student/leader views | ✅ **Fixed** | Extracted to shared partial `views/partials/board.php` |
+| 4 | N+1 queries in teacher ledger | ✅ **Fixed** | Refactored into 2 batch queries with memory grouping |
+| 5 | `views/progress_bar.php` is a zombie opening layout grid | ✅ **Fixed** | Deleted file; clean layout grid tag placed in `dashboard.php` |
+| 6 | Inverted `data-mode` on `join.php` / `create_classroom.php` | ✅ **Fixed** | `join.php` set to `student`, `create_classroom.php` set to `teacher` |
+| 7 | Root `header.php` is really an auth shell | ✅ **Fixed** | Renamed to `auth_header.php`, updated `login.php` & `registers.php` |
+| 8 | Invite code uniqueness not checked | ✅ **Fixed** | Implemented CSPRNG (`random_int`) with retry loop |
+| 9 | Workspace not under Git | ✅ **Fixed** | Initialized repository, created `.gitignore`, untracked `versions/` |
+| 10 | Documentation drift in `gemini.md` | ✅ **Fixed** | Removed Demo Mode & dead files; synchronized schema (13 tables) |
 
-**Open critical issues (Blocker): 2** — #1 and #2.
+**Open critical issues (Blocker): 0** — All 10 issues successfully resolved!
 
 ---
 
