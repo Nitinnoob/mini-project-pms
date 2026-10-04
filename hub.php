@@ -23,7 +23,6 @@ $workspaces = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
 $myWorkspaces = [];
 foreach ($workspaces as $row) {
-    // Oracle fetches column names in uppercase by default
     $myWorkspaces[] = [
         'name' => $row['name'],
         'desc' => 'Workspace context',

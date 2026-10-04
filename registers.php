@@ -24,7 +24,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['username'], $_POST['pa
 }
 ?>
 
-<?php include 'header.php'; ?>
+<?php include 'auth_header.php'; ?>
 
             <h1>Create your account</h1>
             <p class="sub">You'll join or create classrooms once you're signed in.</p>

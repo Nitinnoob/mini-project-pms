@@ -354,17 +354,39 @@ if ($viewData['actualView'] === 'Teacher' && isset($viewData['classroom_id'])) {
     $stmtMentors->execute([$viewData['classroom_id']]);
     $viewData['availableMentors'] = $stmtMentors->fetchAll(PDO::FETCH_ASSOC);
 
+    // Batch fetch members and task milestone stats across all projects in one go (eliminating N+1 queries)
+    $membersByProject = [];
+    $tasksByProject = [];
+
+    if (!empty($realProjects)) {
+        $projectIds = array_column($realProjects, 'id');
+        $placeholders = implode(',', array_fill(0, count($projectIds), '?'));
+
+        $stmtAllMems = $pdo->prepare("
+            SELECT pm.project_id, u.username 
+            FROM project_members pm 
+            JOIN users u ON pm.user_id = u.id 
+            WHERE pm.project_id IN ($placeholders) AND pm.join_status = 'Active'
+        ");
+        $stmtAllMems->execute($projectIds);
+        foreach ($stmtAllMems->fetchAll(PDO::FETCH_ASSOC) as $mRow) {
+            $membersByProject[$mRow['project_id']][] = $mRow['username'];
+        }
+
+        $stmtAllTasks = $pdo->prepare("
+            SELECT project_id, status, milestone 
+            FROM tasks 
+            WHERE project_id IN ($placeholders)
+        ");
+        $stmtAllTasks->execute($projectIds);
+        foreach ($stmtAllTasks->fetchAll(PDO::FETCH_ASSOC) as $tRow) {
+            $tasksByProject[$tRow['project_id']][] = $tRow;
+        }
+    }
+
     foreach ($realProjects as $rp) {
-        // Fetch members
-        $stmtMems = $pdo->prepare("SELECT u.username FROM project_members pm JOIN users u ON pm.user_id = u.id WHERE pm.project_id = ? AND pm.join_status = 'Active'");
-        $stmtMems->execute([$rp['id']]);
-        $memRows = $stmtMems->fetchAll(PDO::FETCH_ASSOC);
-        $memNames = array_column($memRows, 'username');
-        
-        // Fetch task progress grouped by milestone
-        $stmtTProgress = $pdo->prepare("SELECT status, milestone FROM tasks WHERE project_id = ?");
-        $stmtTProgress->execute([$rp['id']]);
-        $tasksRaw = $stmtTProgress->fetchAll(PDO::FETCH_ASSOC);
+        $memNames = $membersByProject[$rp['id']] ?? [];
+        $tasksRaw = $tasksByProject[$rp['id']] ?? [];
         
         $milestones = ['Synopsis', 'Phase 1', 'Phase 2', 'Final Demo'];
         $phaseStats = [];
@@ -426,7 +448,7 @@ function heat_level($count)
 }
 
 require 'views/header.php';
-require 'views/progress_bar.php';
+echo '<div class="flex-1 p-6 grid grid-cols-1 lg:grid-cols-4 gap-6">';
 
 
 

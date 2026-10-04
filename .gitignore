@@ -9,6 +9,7 @@ uploads/*
 # Environment / local logs & temp files
 *.log
 scratch/
+versions/
 
 # OS and Editor metadata
 .DS_Store

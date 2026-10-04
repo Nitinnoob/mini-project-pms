@@ -6,7 +6,7 @@ if (!isset($_SESSION['user_id'])) {
 }
 require 'dbs.php';
 
-$modeSlug = 'student'; // Default fallback theme
+$modeSlug = 'teacher'; // Teacher theme for classroom creation
 $username = htmlspecialchars($_SESSION['username'] ?? 'User');
 $initial = strtoupper(substr($username, 0, 1));
 
@@ -38,9 +38,31 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $min_size = isset($_POST['min_team_size']) ? max(1, (int)$_POST['min_team_size']) : 1;
             $max_size = isset($_POST['max_team_size']) ? max($min_size, (int)$_POST['max_team_size']) : 10;
             
-            $invite_code = substr(str_shuffle('0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ'), 0, 6);
-            $stmt = $pdo->prepare("INSERT INTO classrooms (name, created_by, invite_code, requires_usn, min_team_size, max_team_size, start_date, end_date) VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
-            $stmt->execute([$title, $_SESSION['user_id'], $invite_code, $requires_usn, $min_size, $max_size, $start_date, $end_date]);
+            $chars = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+            $charsLen = strlen($chars);
+            $inserted = false;
+            $maxRetries = 5;
+
+            for ($attempt = 0; $attempt < $maxRetries; $attempt++) {
+                $invite_code = '';
+                for ($i = 0; $i < 6; $i++) {
+                    $invite_code .= $chars[random_int(0, $charsLen - 1)];
+                }
+
+                // Verify uniqueness before insert
+                $stmtCheckCode = $pdo->prepare("SELECT 1 FROM classrooms WHERE invite_code = ?");
+                $stmtCheckCode->execute([$invite_code]);
+                if (!$stmtCheckCode->fetch()) {
+                    $stmt = $pdo->prepare("INSERT INTO classrooms (name, created_by, invite_code, requires_usn, min_team_size, max_team_size, start_date, end_date) VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
+                    $stmt->execute([$title, $_SESSION['user_id'], $invite_code, $requires_usn, $min_size, $max_size, $start_date, $end_date]);
+                    $inserted = true;
+                    break;
+                }
+            }
+
+            if (!$inserted) {
+                throw new Exception("Unable to generate unique invite code.");
+            }
             
             $classroom_id = $pdo->lastInsertId();
             

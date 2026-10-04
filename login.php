@@ -31,7 +31,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['username'], $_POST['pa
 }
 ?>
 
-<?php include 'header.php'; ?>
+<?php include 'auth_header.php'; ?>
 
             <h1>Sign in</h1>
             <p class="sub">Welcome back — pick up where your team left off.</p>
