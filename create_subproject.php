@@ -12,6 +12,28 @@ if (!$classroom_id) {
     exit;
 }
 
+// Guard 1: Verify classroom membership and require 'Team Member' role (no teachers / external users)
+$stmtMember = $pdo->prepare("SELECT role FROM classroom_members WHERE classroom_id = ? AND user_id = ?");
+$stmtMember->execute([$classroom_id, $_SESSION['user_id']]);
+$member = $stmtMember->fetch(PDO::FETCH_ASSOC);
+
+if (!$member || $member['role'] !== 'Team Member') {
+    header("Location: dashboard.php?classroom_id=" . urlencode($classroom_id));
+    exit;
+}
+
+// Guard 2: Enforce 1-project invariant (cannot already be Active or Pending in another project in this classroom)
+$stmtCheckExisting = $pdo->prepare("
+    SELECT 1 FROM project_members pm
+    JOIN projects p ON pm.project_id = p.id
+    WHERE p.classroom_id = ? AND pm.user_id = ? AND pm.join_status IN ('Active', 'Pending')
+");
+$stmtCheckExisting->execute([$classroom_id, $_SESSION['user_id']]);
+if ($stmtCheckExisting->fetch()) {
+    header("Location: dashboard.php?classroom_id=" . urlencode($classroom_id));
+    exit;
+}
+
 $username = htmlspecialchars($_SESSION['username'] ?? 'User');
 $initial = strtoupper(substr($username, 0, 1));
 $error = '';

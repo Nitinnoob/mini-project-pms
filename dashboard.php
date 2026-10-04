@@ -207,6 +207,8 @@ $viewData['blockerCount'] = 0;
 $viewData['onTrackCount'] = 0;
 $viewData['avgVelocity'] = 0;
 $viewData['daysToDeadline'] = 3;
+$viewData['activity_log'] = [];
+$viewData['deliverables'] = [];
 
 
     // REAL DB LOGIC
@@ -294,6 +296,28 @@ $viewData['daysToDeadline'] = 3;
                 $viewData['weeklyLogs'][$log['week_number']] = $log;
             }
         }
+
+        // Fetch Activity Log for Sidebar Feed
+        $stmtAct = $pdo->prepare("
+            SELECT a.action, a.details, a.created_at, COALESCE(u.username, 'Deleted user') AS username
+            FROM activity_log a 
+            LEFT JOIN users u ON a.user_id = u.id
+            WHERE a.project_id = ? 
+            ORDER BY a.created_at DESC LIMIT 20
+        ");
+        $stmtAct->execute([$viewData['myProjectId']]);
+        $viewData['activity_log'] = $stmtAct->fetchAll(PDO::FETCH_ASSOC);
+
+        // Fetch Deliverables for Sidebar Drawer
+        $stmtDel = $pdo->prepare("
+            SELECT d.file_name, d.file_path, d.uploaded_at, COALESCE(u.username, 'Deleted user') AS uploader_name
+            FROM deliverables d 
+            LEFT JOIN users u ON d.uploaded_by = u.id
+            WHERE d.project_id = ? 
+            ORDER BY d.uploaded_at DESC
+        ");
+        $stmtDel->execute([$viewData['myProjectId']]);
+        $viewData['deliverables'] = $stmtDel->fetchAll(PDO::FETCH_ASSOC);
     }
 
 // 4. Project groups (Teacher layout) — group-level ledger
