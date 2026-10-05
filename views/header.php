@@ -52,7 +52,21 @@
             <button id="themeToggleBtn" onclick="toggleTheme()" class="theme-toggle-btn" aria-label="Toggle dark mode">
                 <i id="themeToggleIcon" class="fas fa-moon"></i>
             </button>
-            <button class="text-muted-ui hover:text-accent transition" aria-label="Notifications"><i class="fas fa-bell"></i></button>
+            <div class="relative" id="notifWrap">
+                <button id="notifBellBtn" type="button" class="relative text-muted-ui hover:text-accent transition" aria-label="Notifications" aria-haspopup="true" aria-expanded="false">
+                    <i class="fas fa-bell"></i>
+                    <span id="notifBadge" class="hidden absolute -top-2 -right-2 min-w-[16px] h-4 px-1 rounded-full text-[10px] font-bold flex items-center justify-center" style="background: var(--danger); color: #fff;">0</span>
+                </button>
+                <div id="notifPanel" class="hidden absolute right-0 mt-3 w-80 max-w-[90vw] card shadow-xl z-50" style="background: var(--bg-raised, var(--bg));">
+                    <div class="flex items-center justify-between px-4 py-3 border-b border-ui">
+                        <span class="font-semibold text-sm font-head">Notifications</span>
+                        <button id="notifReadAll" type="button" class="text-xs text-accent hover:underline">Mark all read</button>
+                    </div>
+                    <div id="notifList" class="max-h-96 overflow-y-auto">
+                        <div class="p-4 text-sm text-muted-ui text-center">Loading...</div>
+                    </div>
+                </div>
+            </div>
             <div class="flex items-center gap-2">
                 <span class="font-semibold"><?php echo $username; ?></span>
                 <div class="h-8 w-8 rounded-full flex items-center justify-center font-bold" style="background: var(--accent-2); color: var(--bg);"><?php echo $initial; ?></div>
@@ -62,3 +76,4 @@
     </nav>
 
     <script src="assets/js/theme.js"></script>
+    <script src="assets/js/notifications.js" defer></script>

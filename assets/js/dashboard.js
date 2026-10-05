@@ -5,12 +5,25 @@ const escapeHTML = (str) => {
     return div.innerHTML;
 };
 
+const TEACHER_TABS = ['groups', 'roster', 'phases'];
+
 function switchTeacherTab(tab) {
-                document.getElementById('btn-tab-groups').classList.toggle('active', tab === 'groups');
-                document.getElementById('btn-tab-roster').classList.toggle('active', tab === 'roster');
-                document.getElementById('tab-groups').classList.toggle('hidden', tab !== 'groups');
-                document.getElementById('tab-roster').classList.toggle('hidden', tab !== 'roster');
+                if (!TEACHER_TABS.includes(tab)) tab = 'groups';
+                TEACHER_TABS.forEach(function (name) {
+                    const btn = document.getElementById('btn-tab-' + name);
+                    const pane = document.getElementById('tab-' + name);
+                    if (btn) btn.classList.toggle('active', name === tab);
+                    if (pane) pane.classList.toggle('hidden', name !== tab);
+                });
             }
+
+// Phase edits bounce back here with ?tab=phases so the coordinator lands on the tab they edited.
+(function () {
+    const requested = new URLSearchParams(window.location.search).get('tab');
+    if (requested && TEACHER_TABS.includes(requested)) {
+        switchTeacherTab(requested);
+    }
+})();
 
 
 

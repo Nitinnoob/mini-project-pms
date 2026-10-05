@@ -30,10 +30,12 @@
                     <div class="text-xs text-muted-ui mt-1">overall completion</div>
                 </div>
                 <div class="card stat-tile p-4">
-                    <div class="stat-num text-3xl"><?php echo $viewData['daysToDeadline']; ?></div>
-                    <div class="text-xs text-muted-ui mt-1">days to deadline</div>
+                    <div class="stat-num text-3xl"><?php echo htmlspecialchars((string)$viewData['daysToDeadline']); ?></div>
+                    <div class="text-xs text-muted-ui mt-1"><?php echo htmlspecialchars($viewData['deadlineLabel']); ?></div>
                 </div>
             </div>
+
+            <?php require __DIR__ . '/partials/issues_panel.php'; ?>
 
             <!-- Leader Tabs -->
             <div class="flex gap-6 border-b border-ui">
@@ -47,18 +49,18 @@
             <div id="leader-tab-board" class="view-pane flex-1 flex flex-col">
                 <div class="flex justify-between items-end mb-4 flex-wrap gap-3">
                     <div class="flex items-center gap-1">
-                        <button id="toggleKanbanBtn" class="tab-btn px-3 py-2 <?php echo !$isCalendar ? 'active' : ''; ?>">board.kanban</button>
-                        <button id="toggleCalendarBtn" class="tab-btn px-3 py-2 <?php echo $isCalendar ? 'active' : ''; ?>">calendar.month</button>
+                        <button id="toggleKanbanBtn" class="tab-btn px-3 py-2 <?php echo !$isCalendar ? 'active' : ''; ?>">Board</button>
+                        <button id="toggleCalendarBtn" class="tab-btn px-3 py-2 <?php echo $isCalendar ? 'active' : ''; ?>">Calendar</button>
                     </div>
                     <div class="flex gap-2">
                     <?php if (empty($viewData['isTeacherDrilldown'])): ?>
                     <button onclick="document.getElementById('addTaskModal').classList.remove('hidden')" class="btn-ui text-sm font-semibold px-4 py-2" style="background: var(--accent); color: var(--bg);">
                         <i class="fas fa-plus me-2"></i>Add Task
                     </button>
-                    <button class="btn-ui text-sm font-semibold px-4 py-2" style="background: var(--accent-2); color: var(--bg);">
-                        <i class="fas fa-magic me-2"></i>Generate Friday wrap-up
+                    <button onclick="document.getElementById('reportModal').classList.remove('hidden')" class="btn-ui text-sm font-semibold px-4 py-2" style="background: var(--accent-2); color: var(--bg);">
+                        <i class="fas fa-file-word me-2"></i>Generate Report Assistant
                     </button>
-                    <button class="btn-ui text-sm font-semibold px-4 py-2 text-danger" style="background: transparent;">
+                    <button onclick="document.getElementById('escalationModal').classList.remove('hidden')" class="btn-ui text-sm font-semibold px-4 py-2 text-danger" style="background: transparent;">
                         <i class="fas fa-exclamation-triangle me-2"></i>Escalation flare
                     </button>
                     <?php endif; ?>
@@ -126,7 +128,7 @@
                     <div class="space-y-4">
                         <?php foreach ($viewData['teamRoster'] as $m): ?>
                           <div class="flex items-center gap-4">
-                              <span class="status-dot <?php echo $m['status'] === 'red' ? 'red' : 'green'; ?>" aria-hidden="true"></span>
+                              <span class="status-dot <?php echo in_array($m['status'], ['red', 'amber'], true) ? $m['status'] : 'green'; ?>" title="<?php echo htmlspecialchars($m['status_note'] ?? ''); ?>" aria-label="<?php echo htmlspecialchars($m['status_note'] ?? ''); ?>"></span>
                               <div class="w-48 flex-none">
                                   <div class="font-semibold text-sm"><?php echo htmlspecialchars($m['name']); ?></div>
                                   <div class="text-xs text-muted-ui font-mono-ui"><?php echo htmlspecialchars($m['role']); ?></div>
@@ -142,7 +144,7 @@
                     </div>
                 </div>
 
-                <!-- Invite Classmates (Presentation Simulation) -->
+                <!-- Invite Classmates (real invitations via handle_invitation.php) -->
                 <?php if (empty($viewData['isTeacherDrilldown'])): ?>
                 <div>
                     <h3 class="font-head font-semibold mb-4">Team Building</h3>
@@ -154,7 +156,7 @@
                     </div>
                 </div>
 
-                <!-- Simulation Modal -->
+                <!-- Invite Modal -->
                 <div id="inviteModal" class="success-overlay">
                     <div class="bg-panel border border-ui p-6 rounded-lg w-full max-w-lg shadow-xl pointer-events-auto max-h-[80vh] flex flex-col">
                         <div class="flex justify-between items-center mb-4 pb-4 border-b border-ui">
@@ -182,7 +184,7 @@
                                             </div>
                                         </div>
                                         <?php if (empty($viewData['isTeacherDrilldown'])): ?>
-                                    <button class="px-4 py-1.5 text-xs font-semibold rounded bg-overlay-strong text-muted-ui border border-ui hover:border-accent hover:text-accent transition" onclick="this.innerHTML='<i class=\'fas fa-check\'></i> Sent'; this.classList.add('text-accent', 'border-accent');">
+                                    <button class="px-4 py-1.5 text-xs font-semibold rounded bg-overlay-strong text-muted-ui border border-ui hover:border-accent hover:text-accent transition invite-btn" data-user-id="<?php echo $c['id']; ?>" data-project-id="<?php echo $viewData['myProjectId']; ?>" data-classroom-id="<?php echo $viewData['classroom_id']; ?>">
                                         Invite
                                     </button>
                                     <?php endif; ?>
@@ -194,112 +196,73 @@
                 <?php endif; ?>
             </div>
 
-            <!-- TAB 3: Weekly Logs -->
+            <!-- TAB 3: Weekly Logs (shared partial — Phase 4) -->
             <div id="leader-tab-logs" class="view-pane flex-1 flex flex-col hidden">
-                <div class="card p-5 flex-1 overflow-y-auto">
-                    <h3 class="font-head font-semibold text-lg mb-4">Weekly Submissions</h3>
-                    <?php 
-                    $startDate = !empty($viewData['classroomStartDate']) ? new DateTime($viewData['classroomStartDate']) : null;
-                    $endDate = !empty($viewData['classroomEndDate']) ? new DateTime($viewData['classroomEndDate']) : null;
-                    
-                    if (!$startDate || !$endDate): ?>
-                        <div class="py-12 text-center text-muted-ui text-sm italic border border-ui rounded bg-raised">
-                            The classroom coordinator has not set start and end dates. Weekly logs are disabled.
-                        </div>
-                    <?php else: 
-                        $diff = $startDate->diff($endDate);
-                        $totalWeeks = ceil($diff->days / 7);
-                        if ($totalWeeks == 0) $totalWeeks = 1;
-
-                        for ($w = 1; $w <= $totalWeeks; $w++):
-                            $log = $viewData['weeklyLogs'][$w] ?? null;
-                            $status = $log ? ($log['review_status'] ?? 'pending') : 'unsubmitted';
-                            
-                            $statusBadge = '';
-                            if ($status === 'unsubmitted') $statusBadge = '<span class="badge badge-muted">Not Submitted</span>';
-                            elseif ($status === 'pending') $statusBadge = '<span class="badge badge-accent">Pending Review</span>';
-                            elseif ($status === 'approved') $statusBadge = '<span class="badge badge-green">Approved</span>';
-                            elseif ($status === 'revision_needed') $statusBadge = '<span class="badge badge-danger">Revision Flagged</span>';
-                    ?>
-                        <div class="border border-ui rounded p-4 mb-4 bg-raised">
-                            <div class="flex justify-between items-center mb-2">
-                                <h4 class="font-semibold">Week <?php echo $w; ?></h4>
-                                <?php echo $statusBadge; ?>
-                            </div>
-                            
-                            <?php if (!$log): ?>
-                                <p class="text-sm text-muted-ui mb-3">No submission for this week.</p>
-                            <?php else: ?>
-                                <p class="text-sm font-semibold mt-2">Work Summary:</p>
-                                <p class="text-sm text-muted-ui mb-2"><?php echo nl2br(htmlspecialchars($log['work_summary'] ?? '')); ?></p>
-                                
-                                <p class="text-sm font-semibold">Next Steps:</p>
-                                <p class="text-sm text-muted-ui mb-3"><?php echo nl2br(htmlspecialchars($log['next_steps'] ?? '')); ?></p>
-                                
-                                <?php if (!empty($log['files'])): ?>
-                                    <p class="text-sm font-semibold">Attachments:</p>
-                                    <div class="flex flex-wrap gap-2 mt-1 mb-3">
-                                        <?php foreach ($log['files'] as $f): ?>
-                                            <a href="<?php echo htmlspecialchars($f['file_path']); ?>" download class="inline-flex items-center gap-2 px-3 py-1 text-xs rounded bg-overlay-subtle border border-ui hover:border-accent transition text-muted-ui hover:text-accent">
-                                                <i class="fas fa-paperclip"></i> <?php echo htmlspecialchars($f['file_name']); ?>
-                                            </a>
-                                        <?php endforeach; ?>
-                                    </div>
-                                <?php endif; ?>
-                                
-                                <?php if (!empty($log['mentor_remarks'])): ?>
-                                    <div class="mt-4 p-3 rounded text-sm bg-overlay-subtle border border-ui">
-                                        <p class="font-semibold mb-1"><i class="fas fa-comment-dots text-muted-ui me-2"></i>Mentor Remarks</p>
-                                        <p class="text-muted-ui"><?php echo nl2br(htmlspecialchars($log['mentor_remarks'] ?? '')); ?></p>
-                                    </div>
-                                <?php endif; ?>
-                                
-                                <?php if (!empty($log['attendance'])): ?>
-                                    <div class="mt-4 p-3 rounded text-sm bg-overlay-subtle border border-ui">
-                                        <p class="font-semibold mb-2"><i class="fas fa-users text-muted-ui me-2"></i>Meeting Attendance</p>
-                                        <div class="flex flex-col gap-1">
-                                            <?php foreach ($log['attendance'] as $att): ?>
-                                                <div class="flex justify-between items-center text-xs">
-                                                    <span><?php echo htmlspecialchars($att['username']); ?></span>
-                                                    <?php if ($att['present']): ?>
-                                                        <span class="font-semibold" style="color: var(--status-green);"><i class="fas fa-check me-1"></i>Present</span>
-                                                    <?php else: ?>
-                                                        <span class="font-semibold" style="color: var(--danger);"><i class="fas fa-times me-1"></i>Absent</span>
-                                                    <?php endif; ?>
-                                                </div>
-                                            <?php endforeach; ?>
-                                        </div>
-                                    </div>
-                                <?php endif; ?>
-                            <?php endif; ?>
-
-                            <?php if ((!$log || $status === 'revision_needed') && empty($viewData['isTeacherDrilldown'])): ?>
-                                <div class="<?php echo $log ? 'mt-4 pt-3 border-t border-ui' : ''; ?>">
-                                    <button onclick="openWeeklyLogModal(<?php echo $w; ?>)" class="btn-ui px-4 py-2 text-xs font-semibold hover-overlay-medium transition" style="color: var(--accent); border-color: var(--accent);">
-                                        <i class="fas fa-upload me-2"></i> <?php echo $log ? 'Submit Revision' : 'Submit Weekly Log'; ?>
-                                    </button>
-                                </div>
-                            <?php endif; ?>
-
-                                <?php if (!empty($viewData['isTeacherDrilldown']) && (($viewData['isCoordinator'] ?? false) || (($viewData['myProject']['mentor_id'] ?? 0) == $_SESSION['user_id']))): 
-                                    $logJson = $log ? json_encode([
-                                        'status' => $log['review_status'] ?? 'pending',
-                                        'remarks' => $log['mentor_remarks'] ?? '',
-                                        'attendance' => array_column($log['attendance'] ?? [], 'present', 'user_id')
-                                    ]) : 'null';
-                                ?>
-                                    <div class="mt-4 flex justify-end pt-3 border-t border-ui">
-                                        <button onclick="openMentorReviewModal(<?php echo $w; ?>, <?php echo $log ? $log['id'] : 'null'; ?>, this.getAttribute('data-log'))" data-log="<?php echo htmlspecialchars($logJson); ?>" class="btn-ui px-4 py-2 text-xs font-semibold hover-overlay-medium transition" style="color: var(--accent-2); border-color: var(--accent-2);">
-                                            <i class="fas fa-clipboard-check me-2"></i> Mentor Review
-                                        </button>
-                                    </div>
-                                <?php endif; ?>
-                        </div>
-                    <?php endfor; endif; ?>
-                </div>
+                <?php require __DIR__ . '/partials/weekly_logs.php'; ?>
             </div>
 
         </div>
+
+        <script>
+            document.addEventListener('DOMContentLoaded', function() {
+                const inviteButtons = document.querySelectorAll('.invite-btn');
+
+                inviteButtons.forEach(button => {
+                    button.addEventListener('click', function() {
+                        const btn = this;
+                        const userId = btn.getAttribute('data-user-id');
+                        const projectId = btn.getAttribute('data-project-id');
+                        const classroomId = btn.getAttribute('data-classroom-id');
+
+                        // Disable button during request
+                        btn.disabled = true;
+                        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Sending...';
+
+                        // Send invitation via AJAX
+                        fetch('handle_invitation.php', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/x-www-form-urlencoded',
+                            },
+                            body: new URLSearchParams({
+                                'classroom_id': classroomId,
+                                'project_id': projectId,
+                                'user_id': userId,
+                                'action': 'invite'
+                            })
+                        })
+                        .then(response => response.json())
+                        .then(data => {
+                            if (data.success) {
+                                btn.innerHTML = '<i class="fas fa-check"></i> Invited';
+                                btn.classList.add('text-accent', 'border-accent');
+                                btn.classList.remove('text-muted-ui', 'border-ui', 'bg-overlay-strong');
+                                btn.style.backgroundColor = 'var(--accent-2)';
+                                btn.style.borderColor = 'var(--accent-2)';
+                                btn.style.color = 'var(--bg)';
+                            } else {
+                                btn.innerHTML = '<i class="fas fa-times"></i> Error';
+                                btn.classList.add('text-danger', 'border-danger');
+                                setTimeout(() => {
+                                    btn.innerHTML = 'Invite';
+                                    btn.classList.remove('text-danger', 'border-danger');
+                                    btn.disabled = false;
+                                }, 2000);
+                            }
+                        })
+                        .catch(error => {
+                            btn.innerHTML = '<i class="fas fa-times"></i> Error';
+                            btn.classList.add('text-danger', 'border-danger');
+                            setTimeout(() => {
+                                btn.innerHTML = 'Invite';
+                                btn.classList.remove('text-danger', 'border-danger');
+                                btn.disabled = false;
+                            }, 2000);
+                        });
+                    });
+                });
+            });
+        </script>
 
 
 

@@ -21,7 +21,7 @@
                             ?>
                             <div class="heat-square <?php echo $level === 4 ? 'heat-glow' : ''; ?>"
                                 style="background: var(--accent-2); opacity: <?php echo $opacities[$level]; ?>;"
-                                title="<?php echo $heatmapPattern[$w * 7 + $day] ?? 0; ?> tasks checked off"></div>
+                                title="<?php echo (int)($heatmapPattern[$w * 7 + $day] ?? 0); ?> actions logged"></div>
                             <?php endfor; ?>
                         </div>
                         <?php endfor; ?>
@@ -59,6 +59,10 @@
                                         <i class="fas fa-exchange-alt text-muted-ui"></i>
                                     <?php elseif ($log['action'] === 'Uploaded Deliverable'): ?>
                                         <i class="fas fa-upload text-accent"></i>
+                                    <?php elseif ($log['action'] === 'Raised Issue'): ?>
+                                        <i class="fas fa-triangle-exclamation text-danger"></i>
+                                    <?php elseif ($log['action'] === 'Resolved Issue'): ?>
+                                        <i class="fas fa-circle-check text-accent"></i>
                                     <?php else: ?>
                                         <i class="fas fa-info-circle text-muted-ui"></i>
                                     <?php endif; ?>

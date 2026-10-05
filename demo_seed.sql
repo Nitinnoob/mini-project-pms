@@ -2,8 +2,37 @@
 -- PMS DEMO SEED DATA
 -- All accounts use password: password123
 -- ==========================================
+--
+-- Sections 1-6 are the original handcrafted seed (real faculty, classmates,
+-- USNs and project teams of 5th Semester CS, A & B Section), unchanged except
+-- that the classroom row now carries a schedule and team-size limits.
+-- Section 7 layers the newer features (weekly phases, week-bound tasks,
+-- weekly logs + mentor reviews, blockers, invitations, deliverables,
+-- activity feed, notifications) on top of those same real teams.
+--
+-- Run schema.sql first, then this file. Re-running it resets all demo data.
+-- ==========================================
 
 USE pms;
+
+-- 0. Reset (keeps the table structure from schema.sql, clears the data)
+SET FOREIGN_KEY_CHECKS = 0;
+TRUNCATE TABLE weekly_attendance;
+TRUNCATE TABLE weekly_reviews;
+TRUNCATE TABLE weekly_submission_files;
+TRUNCATE TABLE weekly_submissions;
+TRUNCATE TABLE activity_log;
+TRUNCATE TABLE deliverables;
+TRUNCATE TABLE notifications;
+TRUNCATE TABLE issues;
+TRUNCATE TABLE classroom_phases;
+TRUNCATE TABLE tasks;
+TRUNCATE TABLE project_members;
+TRUNCATE TABLE projects;
+TRUNCATE TABLE classroom_members;
+TRUNCATE TABLE classrooms;
+TRUNCATE TABLE users;
+SET FOREIGN_KEY_CHECKS = 1;
 
 INSERT INTO users (id, username, password, role) VALUES (1, 'Coordinator Admin', '$2y$10$9ms1LzhGBwa99/gyo3oNCu3a3bMxcVd7hJl8UG756xvobdTN4yiJq', NULL);
 INSERT INTO users (id, username, password, role) VALUES (2, 'Roopa', '$2y$10$9ms1LzhGBwa99/gyo3oNCu3a3bMxcVd7hJl8UG756xvobdTN4yiJq', NULL);
@@ -126,7 +155,7 @@ INSERT INTO users (id, username, password, role) VALUES (118, 'Praveen M', '$2y$
 INSERT INTO users (id, username, password, role) VALUES (119, 'Praveen R', '$2y$10$9ms1LzhGBwa99/gyo3oNCu3a3bMxcVd7hJl8UG756xvobdTN4yiJq', NULL);
 
 -- 4. Create Classroom
-INSERT INTO classrooms (id, name, created_by, invite_code, requires_usn) VALUES (1, '5th Semester CS (A & B Section)', 1, 'VTU26X', 1);
+INSERT INTO classrooms (id, name, created_by, invite_code, requires_usn, min_team_size, max_team_size, start_date, end_date) VALUES (1, '5th Semester CS (A & B Section)', 1, 'VTU26X', 1, 3, 5, DATE_SUB(CURDATE(), INTERVAL 10 DAY), DATE_ADD(CURDATE(), INTERVAL 59 DAY));
 INSERT INTO classroom_members (classroom_id, user_id, role, usn) VALUES (1, 1, 'Admin', NULL);
 
 -- 5. Add Guides and Students to Classroom
@@ -466,3 +495,143 @@ INSERT INTO project_members (project_id, user_id, is_leader, join_status) VALUES
 INSERT INTO tasks (project_id, title, description, status, milestone) VALUES (28, 'Literature Survey', 'Read 3 base papers', 'done', 'Synopsis');
 INSERT INTO tasks (project_id, title, description, status, milestone) VALUES (28, 'Architecture Diagram', 'Draft the system architecture', 'inprogress', 'Synopsis');
 INSERT INTO tasks (project_id, title, description, status, milestone) VALUES (28, 'Set up database', 'Create tables based on schema', 'todo', 'Phase 1');
+
+-- ==========================================
+-- 7. CURRENT-APP ADDITIONS
+-- The classroom started 10 days ago and runs 10 weeks, so the demo is
+-- always sitting in Week 2: Literature Survey (Week 1) is done, the
+-- Architecture Diagram (Week 2) is in progress, Database setup (Week 3) is next.
+-- ==========================================
+
+-- 7a. Weekly phases (1 phase = 1 week; teacher-facing labels)
+INSERT INTO classroom_phases (classroom_id, week_number, label, merged_into_week) VALUES
+(1, 1,  'Week 1: Synopsis & Literature Survey', NULL),
+(1, 2,  'Week 2: System Architecture & Design', NULL),
+(1, 3,  'Week 3: Database & Backend Setup', NULL),
+(1, 4,  'Week 4: Core Module Implementation', NULL),
+(1, 5,  'Week 5: Frontend Integration', NULL),
+(1, 6,  'Week 6: Testing & Bug Fixes', NULL),
+(1, 7,  'Week 7: Phase 2 Review', NULL),
+(1, 8,  'Week 8: VTU Report Draft', NULL),
+(1, 9,  'Week 9: Final Polish', NULL),
+(1, 10, 'Week 10: Final Demo & Viva', NULL);
+
+-- 7b. Bind the original 84 tasks to weeks, due dates and assignees
+UPDATE tasks SET week_number = 1, due_date = DATE_SUB(CURDATE(), INTERVAL 4 DAY),
+       created_at = DATE_SUB(NOW(), INTERVAL 10 DAY)
+ WHERE title = 'Literature Survey';
+UPDATE tasks SET week_number = 2, priority = 'high', due_date = DATE_ADD(CURDATE(), INTERVAL 3 DAY),
+       created_at = DATE_SUB(NOW(), INTERVAL 10 DAY)
+ WHERE title = 'Architecture Diagram';
+UPDATE tasks SET week_number = 3, due_date = DATE_ADD(CURDATE(), INTERVAL 10 DAY),
+       created_at = DATE_SUB(NOW(), INTERVAL 10 DAY)
+ WHERE title = 'Set up database';
+
+-- Leader owns the literature survey; teammates take architecture / database
+-- (falls back to the leader for single-member teams).
+UPDATE tasks t
+  JOIN project_members pm ON pm.project_id = t.project_id AND pm.is_leader = 1
+   SET t.assigned_to = pm.user_id;
+UPDATE tasks t
+   SET t.assigned_to = COALESCE((SELECT MIN(pm.user_id) FROM project_members pm
+                                  WHERE pm.project_id = t.project_id AND pm.is_leader = 0 AND pm.join_status = 'Active'),
+                                t.assigned_to)
+ WHERE t.title = 'Architecture Diagram';
+UPDATE tasks t
+   SET t.assigned_to = COALESCE((SELECT MAX(pm.user_id) FROM project_members pm
+                                  WHERE pm.project_id = t.project_id AND pm.is_leader = 0 AND pm.join_status = 'Active'),
+                                t.assigned_to)
+ WHERE t.title = 'Set up database';
+
+-- 7c. A few project-specific tasks for the showcase teams
+-- (Task ids 1-84 are the originals: project N owns ids 3N-2, 3N-1, 3N.)
+INSERT INTO tasks (project_id, assigned_to, title, description, status, milestone, week_number, priority, due_date, created_at) VALUES
+(1,  17, 'Collect phishing URL dataset', 'Gather PhishTank and OpenPhish samples for model training', 'inprogress', 'Phase 1', 2, 'normal', DATE_ADD(CURDATE(), INTERVAL 2 DAY), DATE_SUB(NOW(), INTERVAL 6 DAY)),
+(2,  20, 'Shell command parser prototype', 'Parse natural-language input into terminal commands', 'todo', 'Phase 1', 2, 'normal', DATE_ADD(CURDATE(), INTERVAL 4 DAY), DATE_SUB(NOW(), INTERVAL 5 DAY)),
+(23, 97, 'Kanban board UI', 'Drag-and-drop task board using SortableJS', 'inprogress', 'Phase 1', 2, 'normal', DATE_ADD(CURDATE(), INTERVAL 3 DAY), DATE_SUB(NOW(), INTERVAL 6 DAY)),
+(23, 98, 'Weekly log module', 'Weekly progress submission with attendance and attachments', 'todo', 'Phase 1', 3, 'normal', DATE_ADD(CURDATE(), INTERVAL 9 DAY), DATE_SUB(NOW(), INTERVAL 3 DAY));
+
+-- 7d. Marketplace: CHAITHRA AB is the only classmate without a team.
+-- Sameer (Hostel Management System, solo team) has invited her.
+INSERT INTO project_members (project_id, user_id, is_leader, join_status) VALUES (15, 15, 0, 'Invited');
+
+-- 7e. Weekly logs, attachments, mentor reviews and attendance (Week 1)
+INSERT INTO weekly_submissions (id, project_id, week_number, submitted_by, work_summary, next_steps, submitted_at) VALUES
+(1, 1, 1, 16, 'Finalised the synopsis and reviewed 3 base papers on ML-based phishing URL detection. Shortlisted lexical and host-based features.', 'Draft the system architecture and start collecting the URL dataset.', DATE_SUB(NOW(), INTERVAL 4 DAY)),
+(2, 2, 1, 19, 'Read papers on AI shell assistants and wrote the problem statement.', 'Start the architecture diagram.', DATE_SUB(NOW(), INTERVAL 4 DAY)),
+(3, 23, 1, 96, 'Completed literature survey on academic project tracking tools and finalised the synopsis. Identified classroom, team and weekly-log modules.', 'Design the database schema and the Kanban board flow.', DATE_SUB(NOW(), INTERVAL 3 DAY));
+
+INSERT INTO weekly_submission_files (submission_id, file_name, file_path) VALUES
+(1, 'Phishing_Detection_Literature_Survey.pdf', 'uploads/weekly/Phishing_Detection_Literature_Survey.pdf'),
+(3, 'PMS_Synopsis_Week1.pdf', 'uploads/weekly/PMS_Synopsis_Week1.pdf');
+
+INSERT INTO weekly_reviews (submission_id, reviewed_by, status, mentor_remarks, reviewed_at) VALUES
+(1, 2,    'approved', 'Good start. Compare at least one deep-learning approach against the classical feature-based models.', DATE_SUB(NOW(), INTERVAL 3 DAY)),
+(2, 3,    'revision_needed', 'Summary is too brief. List the base papers you reviewed and the exact scope of the terminal assistant, then resubmit.', DATE_SUB(NOW(), INTERVAL 3 DAY)),
+(3, NULL, 'pending', NULL, DATE_SUB(NOW(), INTERVAL 3 DAY));
+
+INSERT INTO weekly_attendance (submission_id, user_id, present) VALUES
+(1, 16, 1), (1, 17, 1), (1, 18, 1),
+(2, 19, 1), (2, 20, 1), (2, 21, 1), (2, 22, 0),
+(3, 96, 1), (3, 97, 1), (3, 98, 1), (3, 99, 1);
+
+-- 7f. Blockers: one resolved (Project 1), one open (Project 2)
+INSERT INTO issues (id, project_id, raised_by, title, description, week_number, task_id, severity, status, resolved_by, resolved_at, created_at) VALUES
+(1, 1, 16, 'Base paper access blocked on college network', 'IEEE Xplore downloads were blocked on the lab network, so we could not get the full text of two base papers.', 1, 1, 'medium', 'resolved', 2, DATE_SUB(NOW(), INTERVAL 6 DAY), DATE_SUB(NOW(), INTERVAL 7 DAY)),
+(2, 2, 19, 'Unclear scope for command execution sandbox', 'We are unsure whether the terminal should execute generated commands directly or only suggest them. This changes the whole architecture, so we need guidance before finalising the diagram.', 2, 5, 'high', 'open', NULL, NULL, DATE_SUB(NOW(), INTERVAL 1 DAY));
+
+-- 7g. Deliverables
+INSERT INTO deliverables (project_id, task_id, uploaded_by, file_name, file_path, uploaded_at) VALUES
+(1,  1,  16, 'Phishing_Detection_Synopsis.pdf', 'uploads/Phishing_Detection_Synopsis.pdf', DATE_SUB(NOW(), INTERVAL 5 DAY)),
+(23, 67, 96, 'PMS_Synopsis.pdf', 'uploads/PMS_Synopsis.pdf', DATE_SUB(NOW(), INTERVAL 4 DAY));
+
+-- 7h. Activity feed / heatmap
+-- Every team: tasks created at kickoff, literature survey done, architecture started.
+INSERT INTO activity_log (project_id, user_id, action, details, created_at)
+SELECT t.project_id, pm.user_id, 'Created Task', CONCAT('Created task: ', t.title, ' [Phase ', t.week_number, ']'), DATE_SUB(NOW(), INTERVAL 10 DAY)
+  FROM tasks t JOIN project_members pm ON pm.project_id = t.project_id AND pm.is_leader = 1
+ WHERE t.id <= 84;
+INSERT INTO activity_log (project_id, user_id, action, details, created_at)
+SELECT t.project_id, t.assigned_to, 'Updated Task', CONCAT('Moved task ''', t.title, ''' to done'), DATE_SUB(NOW(), INTERVAL (4 + MOD(t.project_id, 3)) DAY)
+  FROM tasks t WHERE t.title = 'Literature Survey';
+INSERT INTO activity_log (project_id, user_id, action, details, created_at)
+SELECT t.project_id, t.assigned_to, 'Updated Task', CONCAT('Moved task ''', t.title, ''' to inprogress'), DATE_SUB(NOW(), INTERVAL (1 + MOD(t.project_id, 3)) DAY)
+  FROM tasks t WHERE t.title = 'Architecture Diagram';
+
+-- Showcase teams
+INSERT INTO activity_log (project_id, user_id, action, details, created_at) VALUES
+(1,  16, 'Raised Issue', 'raised a medium blocker: Base paper access blocked on college network', DATE_SUB(NOW(), INTERVAL 7 DAY)),
+(1,  2,  'Resolved Issue', 'resolved the blocker: Base paper access blocked on college network', DATE_SUB(NOW(), INTERVAL 6 DAY)),
+(1,  16, 'Uploaded Deliverable', 'Uploaded file: Phishing_Detection_Synopsis.pdf', DATE_SUB(NOW(), INTERVAL 5 DAY)),
+(1,  17, 'Created Task', 'Created task: Collect phishing URL dataset [Phase 2]', DATE_SUB(NOW(), INTERVAL 6 DAY)),
+(1,  17, 'Updated Task', 'Moved task ''Collect phishing URL dataset'' to inprogress', DATE_SUB(NOW(), INTERVAL 2 DAY)),
+(2,  19, 'Created Task', 'Created task: Shell command parser prototype [Phase 2]', DATE_SUB(NOW(), INTERVAL 5 DAY)),
+(2,  19, 'Raised Issue', 'raised a high blocker: Unclear scope for command execution sandbox', DATE_SUB(NOW(), INTERVAL 1 DAY)),
+(23, 96, 'Uploaded Deliverable', 'Uploaded file: PMS_Synopsis.pdf', DATE_SUB(NOW(), INTERVAL 4 DAY)),
+(23, 96, 'Created Task', 'Created task: Kanban board UI [Phase 2]', DATE_SUB(NOW(), INTERVAL 6 DAY)),
+(23, 97, 'Updated Task', 'Moved task ''Kanban board UI'' to inprogress', DATE_SUB(NOW(), INTERVAL 1 DAY)),
+(23, 96, 'Created Task', 'Created task: Weekly log module [Phase 3]', DATE_SUB(NOW(), INTERVAL 3 DAY));
+
+-- 7i. Notifications (header bell)
+INSERT INTO notifications (user_id, type, message, link, is_read, created_at) VALUES
+-- Coordinator + mentors
+(1,  'issue_raised', 'LOKESH N KULER raised a high blocker in AI-POWERED TERMINAL.', 'dashboard.php?classroom_id=1&project_id=2', 0, DATE_SUB(NOW(), INTERVAL 1 DAY)),
+(3,  'issue_raised', 'LOKESH N KULER raised a high blocker in AI-POWERED TERMINAL.', 'dashboard.php?classroom_id=1&project_id=2', 0, DATE_SUB(NOW(), INTERVAL 1 DAY)),
+(14, 'weekly_log',   'Ranjith kumar submitted the Week 1 log for Project management system.', 'dashboard.php?classroom_id=1&project_id=23', 0, DATE_SUB(NOW(), INTERVAL 3 DAY)),
+(2,  'weekly_log',   'KEERTHANA submitted the Week 1 log for AI BASED PHISHING DETECTION SYSTEM.', 'dashboard.php?classroom_id=1&project_id=1', 1, DATE_SUB(NOW(), INTERVAL 4 DAY)),
+-- Project 1 (approved log, resolved blocker)
+(16, 'review',         'Your mentor approved the Week 1 log and left remarks.', 'dashboard.php?classroom_id=1', 0, DATE_SUB(NOW(), INTERVAL 3 DAY)),
+(17, 'review',         'Your mentor approved the Week 1 log and left remarks.', 'dashboard.php?classroom_id=1', 0, DATE_SUB(NOW(), INTERVAL 3 DAY)),
+(18, 'review',         'Your mentor approved the Week 1 log and left remarks.', 'dashboard.php?classroom_id=1', 1, DATE_SUB(NOW(), INTERVAL 3 DAY)),
+(16, 'issue_resolved', 'Roopa resolved your blocker "Base paper access blocked on college network".', 'dashboard.php?classroom_id=1', 1, DATE_SUB(NOW(), INTERVAL 6 DAY)),
+(17, 'task_assigned',  'You were assigned: Collect phishing URL dataset.', 'dashboard.php?classroom_id=1', 1, DATE_SUB(NOW(), INTERVAL 6 DAY)),
+-- Project 2 (revision needed)
+(19, 'review', 'Your mentor asked for a revision on the Week 1 log.', 'dashboard.php?classroom_id=1', 0, DATE_SUB(NOW(), INTERVAL 3 DAY)),
+(20, 'review', 'Your mentor asked for a revision on the Week 1 log.', 'dashboard.php?classroom_id=1', 0, DATE_SUB(NOW(), INTERVAL 3 DAY)),
+(21, 'review', 'Your mentor asked for a revision on the Week 1 log.', 'dashboard.php?classroom_id=1', 0, DATE_SUB(NOW(), INTERVAL 3 DAY)),
+(22, 'review', 'Your mentor asked for a revision on the Week 1 log.', 'dashboard.php?classroom_id=1', 0, DATE_SUB(NOW(), INTERVAL 3 DAY)),
+-- Project 23
+(97, 'task_assigned', 'You were assigned: Kanban board UI.', 'dashboard.php?classroom_id=1', 0, DATE_SUB(NOW(), INTERVAL 6 DAY)),
+(98, 'task_assigned', 'You were assigned: Weekly log module.', 'dashboard.php?classroom_id=1', 0, DATE_SUB(NOW(), INTERVAL 3 DAY)),
+-- Marketplace invite
+(15, 'invite', 'You have been invited to join Hostel Management System.', 'dashboard.php?classroom_id=1', 0, DATE_SUB(NOW(), INTERVAL 1 DAY));

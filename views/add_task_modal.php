@@ -31,13 +31,22 @@
             </div>
             
             <div>
-                <label class="block text-sm font-semibold mb-1">VTU Phase (Milestone)</label>
-                <select name="milestone" class="w-full bg-raised border border-ui rounded px-3 py-2 text-sm focus:outline-none focus:border-accent transition">
-                    <option value="Synopsis">Synopsis / Idea Pitch</option>
-                    <option value="Phase 1">Phase 1 (Design & Architecture)</option>
-                    <option value="Phase 2">Phase 2 (Implementation)</option>
-                    <option value="Final Demo">Final Demo & Report</option>
-                </select>
+                <label class="block text-sm font-semibold mb-1">Phase / Week</label>
+                <?php if (!empty($viewData['phases'])): ?>
+                    <select name="week_number" class="w-full bg-raised border border-ui rounded px-3 py-2 text-sm focus:outline-none focus:border-accent transition">
+                        <?php foreach ($viewData['phases'] as $p): ?>
+                            <option value="<?php echo (int)$p['week_number']; ?>" <?php echo !empty($p['is_current']) ? 'selected' : ''; ?>>
+                                <?php echo htmlspecialchars($p['label'] . ' (' . date('M j', strtotime($p['date_from'])) . ' – ' . date('M j', strtotime($p['date_to'])) . ')'); ?>
+                            </option>
+                        <?php endforeach; ?>
+                    </select>
+                <?php else: ?>
+                    <p class="text-xs text-muted-ui mb-2">
+                        The coordinator has not set start and end dates, so phases can't be derived yet.
+                        The task will be saved unscheduled.
+                    </p>
+                    <input type="hidden" name="week_number" value="">
+                <?php endif; ?>
             </div>
             <div>
                 <label class="block text-sm font-semibold mb-1">Priority</label>

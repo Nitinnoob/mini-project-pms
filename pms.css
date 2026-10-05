@@ -57,7 +57,7 @@
     --soft-bg-opacity: 0.14;
 
     /* ---- Shared shadow + track tokens, re-tuned per theme ---- */
-    --card-shadow: 0 1px 2px rgba(20, 24, 31, 0.04);
+    --card-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
     --track-bg: rgba(20, 24, 31, 0.08);
 
     /* ---- Type: one voice, not four ---- */
@@ -66,7 +66,7 @@
     --font-mono: 'JetBrains Mono', monospace;
 
     /* ---- Shape: one radius app-wide ---- */
-    --radius: 8px;
+    --radius: 14px;
 
     /* Default role cue (overridden per data-mode below) */
     --role-accent: var(--accent-2);
@@ -113,7 +113,7 @@ html.dark {
 
     --soft-bg-opacity: 0.18;
 
-    --card-shadow: 0 1px 3px rgba(0, 0, 0, 0.45);
+    --card-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
     --track-bg: rgba(255, 255, 255, 0.1);
 }
 
@@ -801,6 +801,22 @@ a.card:hover {
     font-family: var(--font-mono);
     white-space: nowrap;
 }
+/* Phase 4: task → phase/week chip on Kanban cards */
+.phase-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: .3em;
+    padding: 2px 7px;
+    border-radius: var(--radius);
+    font-weight: 600;
+    font-size: .66rem;
+    font-family: var(--font-mono);
+    white-space: nowrap;
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
 .badge-accent {
     background: rgba(var(--accent-rgb), var(--soft-bg-opacity));
     color: var(--accent);

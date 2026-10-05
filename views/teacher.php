@@ -13,6 +13,115 @@
             <div class="flex gap-6 border-b border-ui mb-6">
                 <button id="btn-tab-groups" class="tab-btn active pb-2" onclick="switchTeacherTab('groups')">Project Groups</button>
                 <button id="btn-tab-roster" class="tab-btn pb-2" onclick="switchTeacherTab('roster')">Classroom</button>
+                <button id="btn-tab-phases" class="tab-btn pb-2" onclick="switchTeacherTab('phases')">Phases</button>
+            </div>
+
+            <!-- TAB 3: Phase Schedule (1 phase = 1 week; rename/merge) -->
+            <div id="tab-phases" class="view-pane flex-1 flex flex-col hidden">
+                <?php if (empty($viewData['hasSchedule'])): ?>
+                    <div class="card p-10 text-center border-dashed flex flex-col items-center justify-center">
+                        <i class="fas fa-calendar-xmark text-3xl text-muted-ui opacity-50 mb-3"></i>
+                        <h3 class="font-head font-semibold mb-2">No schedule set</h3>
+                        <p class="text-sm text-muted-ui max-w-md">
+                            Phases are derived automatically from this classroom's start and end dates.
+                            Set both dates when creating or editing the classroom to generate them.
+                        </p>
+                    </div>
+                <?php else: ?>
+                    <div class="mb-4">
+                        <h2 class="text-2xl font-head font-semibold">Phase Schedule</h2>
+                        <p class="text-muted-ui text-sm mt-1">
+                            <?php echo (int)$viewData['totalWeeks']; ?> phases &middot; one phase per week, derived from
+                            <?php echo htmlspecialchars(date('M j, Y', strtotime($viewData['classroomStartDate']))); ?>
+                            &ndash;
+                            <?php echo htmlspecialchars(date('M j, Y', strtotime($viewData['classroomEndDate']))); ?>.
+                        </p>
+                    </div>
+
+                    <?php if (empty($viewData['isCoordinator'])): ?>
+                        <div class="card p-4 mb-4 flex items-start gap-3" style="border-color: var(--accent-2);">
+                            <i class="fas fa-lock mt-0.5" style="color: var(--accent-2);"></i>
+                            <p class="text-sm text-muted-ui">Only the classroom coordinator can rename or merge phases.</p>
+                        </div>
+                    <?php endif; ?>
+
+                    <div class="card flex-1 overflow-y-auto p-4">
+                        <div class="space-y-3">
+                            <?php foreach ($viewData['phases'] as $p): ?>
+                            <div class="flex items-center gap-3 p-3 bg-raised border <?php echo $p['is_current'] ? 'border-accent' : 'border-ui'; ?> rounded flex-wrap">
+                                <div class="w-14 flex-none text-center">
+                                    <span class="text-xs font-mono-ui font-semibold"><?php echo (int)$p['week_number']; ?></span>
+                                </div>
+                                <div class="flex-1 min-w-[160px]">
+                                    <?php if (!empty($viewData['isCoordinator'])): ?>
+                                        <form method="POST" action="manage_phase.php" class="flex gap-2 items-center">
+                                            <input type="hidden" name="classroom_id" value="<?php echo htmlspecialchars($viewData['classroom_id']); ?>">
+                                            <input type="hidden" name="week_number" value="<?php echo (int)$p['week_number']; ?>">
+                                            <input type="hidden" name="action" value="rename">
+                                            <input type="text" name="label" value="<?php echo htmlspecialchars($p['label']); ?>" maxlength="120" required
+                                                   class="bg-panel border border-ui rounded px-3 py-1.5 text-sm flex-1 focus:outline-none focus:border-accent transition">
+                                            <button type="submit" class="btn-ui px-3 py-1.5 text-xs font-semibold" style="color: var(--accent); border-color: var(--accent);">Save</button>
+                                        </form>
+                                    <?php else: ?>
+                                        <span class="font-semibold text-sm"><?php echo htmlspecialchars($p['label']); ?></span>
+                                    <?php endif; ?>
+                                    <span class="block text-xs text-muted-ui font-mono-ui mt-1">
+                                        <?php echo htmlspecialchars(date('M j', strtotime($p['date_from'])) . ' – ' . date('M j', strtotime($p['date_to']))); ?>
+                                    </span>
+                                </div>
+
+                                <div class="flex items-center gap-2 flex-none flex-wrap justify-end">
+                                    <?php if ($p['is_current']): ?>
+                                        <span class="badge" style="background: var(--accent-2); color: var(--bg);">Current</span>
+                                    <?php endif; ?>
+
+                                    <?php if (!empty($p['merged_from'])): ?>
+                                        <span class="badge badge-accent" title="Tasks and weekly logs from these phases roll up into this one">
+                                            + Week <?php echo htmlspecialchars(implode(', ', $p['merged_from'])); ?>
+                                        </span>
+                                    <?php endif; ?>
+                                </div>
+
+                                <?php if (!empty($viewData['isCoordinator'])): ?>
+                                <div class="flex items-center gap-2 flex-none">
+                                    <?php if ($p['is_merged']): ?>
+                                        <span class="badge badge-muted">Merged into Week <?php echo (int)$p['merged_into_week']; ?></span>
+                                        <form method="POST" action="manage_phase.php" class="inline">
+                                            <input type="hidden" name="classroom_id" value="<?php echo htmlspecialchars($viewData['classroom_id']); ?>">
+                                            <input type="hidden" name="week_number" value="<?php echo (int)$p['week_number']; ?>">
+                                            <input type="hidden" name="action" value="unmerge">
+                                            <button type="submit" class="btn-ui px-3 py-1.5 text-xs font-semibold" style="color: var(--accent); border-color: var(--accent);">Unmerge</button>
+                                        </form>
+                                    <?php else: ?>
+                                        <form method="POST" action="manage_phase.php" class="flex items-center gap-2">
+                                            <input type="hidden" name="classroom_id" value="<?php echo htmlspecialchars($viewData['classroom_id']); ?>">
+                                            <input type="hidden" name="week_number" value="<?php echo (int)$p['week_number']; ?>">
+                                            <input type="hidden" name="action" value="merge">
+                                            <select name="target_week" class="bg-panel border border-ui rounded px-2 py-1.5 text-xs focus:outline-none focus:border-accent transition">
+                                                <option value="">Merge into&hellip;</option>
+                                                <?php foreach ($viewData['phases'] as $target): ?>
+                                                    <?php
+                                                    // Skip self, already-merged weeks, and weeks that collect
+                                                    // others (merging into those would strand them).
+                                                    if ($target['week_number'] == $p['week_number']) continue;
+                                                    if ($target['is_merged']) continue;
+                                                    if (!empty($target['merged_from'])) continue;
+                                                    ?>
+                                                    <option value="<?php echo (int)$target['week_number']; ?>">
+                                                        <?php echo htmlspecialchars($target['label']); ?>
+                                                    </option>
+                                                <?php endforeach; ?>
+                                            </select>
+                                            <button type="submit" class="btn-ui px-3 py-1.5 text-xs font-semibold" style="color: var(--accent-2); border-color: var(--accent-2);">Merge</button>
+                                        </form>
+                                    <?php endif; ?>
+                                </div>
+                                <?php endif; ?>
+                            </div>
+                            <?php endforeach; ?>
+                        </div>
+                    </div>
+                <?php endif; ?>
             </div>
 
             <!-- TAB 1: Project Groups (Ledger) -->
@@ -40,8 +149,12 @@
                     </div>
                     <div id="ledger-body" class="flex-1">
                         <?php if (empty($viewData['projectGroups'])): ?>
-                        <div class="py-12 text-center text-muted-ui text-sm italic" id="empty-groups-state">
-                            Waiting for students to create project groups...
+                        <div class="py-12 text-center text-muted-ui text-sm" id="empty-groups-state">
+                            <div class="flex flex-col items-center gap-3 mb-4">
+                                <i class="fas fa-users text-muted-ui text-2xl"></i>
+                            </div>
+                            <p class="font-medium">Waiting for students to create project groups...</p>
+                            <p class="text-sm text-muted-ui">Once students form teams, their projects will appear here.</p>
                         </div>
                         <?php endif; ?>
                         <?php foreach ($viewData['projectGroups'] as $index => $g):
@@ -57,22 +170,34 @@
                                     <span class="seal flex-none"><i class="fas fa-check"></i></span>
                                     <?php endif; ?>
                                     <span class="font-semibold truncate"><?php echo htmlspecialchars($g['name']); ?></span>
+                                    <?php if (!empty($g['open_issues'])): ?>
+                                    <span class="badge badge-danger flex-none" title="Open blockers raised by this team"><i class="fas fa-triangle-exclamation me-1"></i><?php echo (int)$g['open_issues']; ?> blocker<?php echo $g['open_issues'] > 1 ? 's' : ''; ?></span>
+                                    <?php endif; ?>
                                     <i class="fas fa-chevron-down text-xs text-muted-ui ml-2 transition-transform duration-200" id="chevron-<?php echo $index; ?>"></i>
                                 </div>
                                 <span class="w-20 text-right text-sm text-muted-ui"><?php echo (int)$g['members']; ?></span>
                                 <div class="w-40">
-                                    <?php if (!empty($g['phase_stats'])): ?>
+                                    <?php if (!empty($g['phase_stats']) && !empty($g['has_schedule'])): ?>
                                         <div class="flex gap-1 mb-1">
-                                            <?php foreach (['Synopsis', 'Phase 1', 'Phase 2', 'Final Demo'] as $m): ?>
-                                                <?php 
-                                                $pPct = $g['phase_stats'][$m] ?? 0; 
-                                                $pColor = $pPct === 100 ? 'var(--accent)' : ($pPct > 0 ? 'var(--accent-2)' : 'var(--border)');
-                                                ?>
-                                                <div class="flex-1 h-2 rounded-sm" style="background: <?php echo $pColor; ?>;" title="<?php echo $m . ': ' . $pPct . '%'; ?>"></div>
+                                            <?php foreach ($g['phase_stats'] as $ws):
+                                                $pPct = $ws['percent']; // null = no tasks scheduled yet
+                                                if ($pPct === null) {
+                                                    $pColor = 'var(--border)';
+                                                } elseif ($pPct === 100) {
+                                                    $pColor = 'var(--accent)';
+                                                } elseif ($pPct > 0) {
+                                                    $pColor = 'var(--accent-2)';
+                                                } else {
+                                                    $pColor = 'var(--border)';
+                                                }
+                                                $wTitle = $ws['label'] . ($pPct === null ? ': no tasks yet' : ': ' . $pPct . '%');
+                                            ?>
+                                                <div class="flex-1 h-2 rounded-sm" style="background: <?php echo $pColor; ?>; <?php echo !empty($ws['is_current']) ? 'outline: 1px solid var(--accent-2);' : ''; ?>" title="<?php echo htmlspecialchars($wTitle); ?>"></div>
                                             <?php endforeach; ?>
                                         </div>
                                         <span class="text-xs font-mono-ui text-muted-ui flex justify-between">
                                             <span><?php echo (int)$g['percent']; ?>% overall</span>
+                                            <span><?php echo count($g['phase_stats']); ?> phases</span>
                                         </span>
                                     <?php else: ?>
                                         <div class="ink-bar-track w-full mb-1">
@@ -180,8 +305,12 @@
                     </div>
                     <div id="live-roster-list" class="flex flex-col mt-2">
                         <?php if (empty($viewData['classroomRoster'])): ?>
-                            <div class="py-6 text-center text-muted-ui text-sm italic" id="empty-roster-state">
-                                No students have joined this classroom yet.
+                            <div class="py-6 text-center text-muted-ui text-sm" id="empty-roster-state">
+                                <div class="flex flex-col items-center gap-3 mb-4">
+                                    <i class="fas fa-user-friends text-muted-ui text-2xl"></i>
+                                </div>
+                                <p class="font-medium">No students have joined this classroom yet.</p>
+                                <p class="text-sm text-muted-ui">Share the invite code to get started.</p>
                             </div>
                         <?php else: ?>
                             <?php foreach ($viewData['classroomRoster'] as $student): ?>

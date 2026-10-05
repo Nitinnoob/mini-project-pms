@@ -8,11 +8,17 @@ uploads/*
 
 # Environment / local logs & temp files
 *.log
-scratch/
-versions/
+misc/
 
 # OS and Editor metadata
 .DS_Store
 Thumbs.db
 .vscode/
 .idea/
+
+# AI assistant config (local only)
+.agents/
+.antigravityignore
+CLAUDE.md
+gemini.md
+GEMINI.md

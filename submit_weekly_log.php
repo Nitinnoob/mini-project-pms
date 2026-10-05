@@ -5,6 +5,7 @@ if (!isset($_SESSION['user_id'])) {
     exit;
 }
 require 'dbs.php';
+require_once 'notify.php';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $project_id = $_POST['project_id'] ?? null;
@@ -34,6 +35,38 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         WHERE s.project_id = ? AND s.week_number = ?
     ");
     $stmtCheck->execute([$project_id, $week_number]);
+
+            // Calculate total weeks for the classroom to determine if this is the final week
+            $stmtCrs = $pdo->prepare("SELECT start_date, end_date FROM classrooms c JOIN projects p ON p.classroom_id = c.id WHERE p.id = ?");
+            $stmtCrs->execute([$project_id]);
+            $crsDates = $stmtCrs->fetch(PDO::FETCH_ASSOC);
+            if ($crsDates) {
+                $startDate = new DateTime($crsDates['start_date']);
+                $endDate = new DateTime($crsDates['end_date']);
+                $diff = $startDate->diff($endDate);
+                $totalWeeks = ceil($diff->days / 7);
+                if ($totalWeeks == 0) $totalWeeks = 1;
+            } else {
+                $totalWeeks = 1;
+            }
+
+            // Get min team size for this classroom
+            $stmtMin = $pdo->prepare("SELECT min_team_size FROM classrooms c JOIN projects p ON p.classroom_id = c.id WHERE p.id = ?");
+            $stmtMin->execute([$project_id]);
+            $minSizeRow = $stmtMin->fetch(PDO::FETCH_ASSOC);
+            $minTeamSize = $minSizeRow['min_team_size'] ?? 1;
+
+            // Count active members for this project
+            $stmtActive = $pdo->prepare("SELECT COUNT(*) FROM project_members WHERE project_id = ? AND join_status = 'Active'");
+            $stmtActive->execute([$project_id]);
+            $activeCount = $stmtActive->fetchColumn();
+
+            // If this is the final week and team is understaffed, block submission
+            if ($week_number == $totalWeeks && $activeCount < $minTeamSize) {
+                header("Location: dashboard.php?classroom_id=" . urlencode($classroom_id) . "&error=min_team_size");
+                exit;
+            }
+
     $existing = $stmtCheck->fetch(PDO::FETCH_ASSOC);
 
     if ($existing && $existing['status'] === 'approved') {
@@ -98,6 +131,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
         
         $pdo->commit();
+
+        notify_project_mentor($pdo, $project_id, 'weekly_log',
+            htmlspecialchars_decode($_SESSION['username'] ?? 'A teammate') . ' submitted the Week ' . (int)$week_number . ' log for ' . notify_project_name($pdo, $project_id) . '.',
+            'dashboard.php?classroom_id=' . urlencode($classroom_id) . '&project_id=' . urlencode($project_id), $_SESSION['user_id']);
     } catch (Exception $e) {
         $pdo->rollBack();
     }

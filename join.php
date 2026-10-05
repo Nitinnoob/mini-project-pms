@@ -64,9 +64,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <title>PMS — Join Workspace</title>
     <link rel="stylesheet" href="assets/css/tailwind.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Sans+Condensed:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Serif:wght@400;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="pms.css">
     <script>
         (function () {
@@ -80,7 +77,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 </head>
 <body class="min-h-screen flex flex-col">
 
-    <nav class="border-b border-ui py-3 px-6 flex justify-between items-center" style="border-color: var(--border); background: var(--bg-raised);">
+    <nav class="border-b border-ui bg-raised py-3 px-6 flex justify-between items-center" style="border-color: var(--border); background: var(--bg-raised);">
         <a href="hub.php" class="flex items-center gap-4 hover:opacity-80 transition">
             <div class="p-2 rounded" style="background: var(--accent); border-radius: var(--radius);">
                 <i class="fas fa-layer-group" style="color: var(--bg);"></i>

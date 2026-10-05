@@ -5,6 +5,7 @@ if (!isset($_SESSION['user_id'])) {
     exit;
 }
 require 'dbs.php';
+require_once 'notify.php';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $project_id = $_POST['project_id'] ?? null;
@@ -76,6 +77,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
             
             $pdo->commit();
+
+            $statusText = ['approved' => 'approved', 'revision_needed' => 'sent back for revision', 'pending' => 'updated'][$status] ?? 'updated';
+            notify_project_members($pdo, $project_id, 'review',
+                'Your mentor ' . $statusText . ' the Week ' . (int)$week_number . ' log' . (trim($mentor_remarks) !== '' ? ' and left remarks.' : '.'),
+                'dashboard.php?classroom_id=' . urlencode($classroom_id), $_SESSION['user_id']);
         } catch (Exception $e) {
             $pdo->rollBack();
             // log error

@@ -24,8 +24,9 @@ $workspaces = $stmt->fetchAll(PDO::FETCH_ASSOC);
 $myWorkspaces = [];
 foreach ($workspaces as $row) {
     $myWorkspaces[] = [
+        'id' => $row['id'],
         'name' => $row['name'],
-        'desc' => 'Workspace context',
+        'desc' => $row['role'] === 'Admin' ? 'Coordinator / Faculty Guide' : 'Student Classroom',
         'members' => $row['member_count'],
         'role' => $row['role'],
         'link' => 'dashboard.php?classroom_id=' . urlencode($row['id'])
@@ -41,9 +42,6 @@ foreach ($workspaces as $row) {
     <title>PMS — Hub</title>
     <link rel="stylesheet" href="assets/css/tailwind.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Sans+Condensed:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Serif:wght@400;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="pms.css">
     <script>
         (function () {
@@ -97,29 +95,44 @@ foreach ($workspaces as $row) {
         <h3 class="text-lg font-semibold mb-4 border-b pb-2" style="border-color: var(--border);">Your Classrooms</h3>
         
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            <?php foreach ($myWorkspaces as $ws): ?>
-            <a href="<?php echo $ws['link']; ?>" class="card block p-6">
-                <div class="flex justify-between items-start mb-4">
-                    <div class="p-3 rounded-lg" style="background: var(--bg-raised);">
-                        <i class="fas fa-server text-xl" style="color: var(--accent);"></i>
+            <?php
+            $bannerGradients = [
+                'linear-gradient(135deg, #1f6f5c, #134e40)',
+                'linear-gradient(135deg, #c17817, #854f0a)',
+                'linear-gradient(135deg, #2563eb, #1d4ed8)',
+                'linear-gradient(135deg, #059669, #047857)',
+                'linear-gradient(135deg, #7c3aed, #5b21b6)',
+                'linear-gradient(135deg, #db2777, #9d174d)',
+            ];
+            foreach ($myWorkspaces as $ws):
+                $gradient = $bannerGradients[abs(crc32((string)($ws['id'] ?? $ws['name']))) % count($bannerGradients)];
+            ?>
+            <a href="<?php echo $ws['link']; ?>" class="card block relative overflow-hidden transition-all duration-200 hover:-translate-y-1 hover:shadow-xl flex flex-col">
+                <div class="h-24 p-5 flex justify-between items-start text-white relative" style="background: <?php echo $gradient; ?>;">
+                    <div>
+                        <span class="text-[11px] font-bold px-2 py-0.5 rounded uppercase tracking-wider" style="background: rgba(0,0,0,0.25);">
+                            <?php echo htmlspecialchars($ws['role']); ?>
+                        </span>
+                        <h4 class="text-lg font-bold font-head mt-2 line-clamp-1 drop-shadow-sm text-white"><?php echo htmlspecialchars($ws['name']); ?></h4>
                     </div>
-                    <span class="text-xs font-semibold px-2 py-1 rounded" style="background: var(--bg-raised); color: var(--muted); border: 1px solid var(--border);">
-                        <?php echo htmlspecialchars($ws['role']); ?>
-                    </span>
+                    <div class="w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0" style="background: rgba(255,255,255,0.2);">
+                        <i class="fas fa-graduation-cap text-sm"></i>
+                    </div>
                 </div>
-                <h4 class="text-xl font-bold mb-1"><?php echo htmlspecialchars($ws['name']); ?></h4>
-                <p class="text-sm mb-4" style="color: var(--muted);"><?php echo htmlspecialchars($ws['desc']); ?></p>
-                <div class="text-xs font-semibold flex items-center gap-2" style="color: var(--muted);">
-                    <i class="fas fa-users"></i> <?php echo $ws['members']; ?> members
+                <div class="p-5 flex-1 flex flex-col justify-between">
+                    <p class="text-xs mb-4 text-muted-ui"><?php echo htmlspecialchars($ws['desc']); ?></p>
+                    <div class="text-xs font-semibold flex items-center gap-2 text-muted-ui pt-3 border-t border-ui">
+                        <i class="fas fa-users text-accent"></i> <?php echo $ws['members']; ?> member<?php echo $ws['members'] != 1 ? 's' : ''; ?>
+                    </div>
                 </div>
             </a>
             <?php endforeach; ?>
-            <a href="join.php" class="card block p-6 opacity-70 hover:opacity-100 flex flex-col items-center justify-center text-center min-h-[200px]" style="border-style: dashed;">
+            <a href="join.php" class="card block p-6 opacity-75 hover:opacity-100 flex flex-col items-center justify-center text-center min-h-[180px] transition-all duration-200 hover:-translate-y-1 hover:shadow-md" style="border-style: dashed;">
                 <div class="w-12 h-12 rounded-full flex items-center justify-center mb-3" style="background: var(--bg-raised);">
-                    <i class="fas fa-plus text-xl" style="color: var(--muted);"></i>
+                    <i class="fas fa-plus text-xl text-accent"></i>
                 </div>
-                <h4 class="font-bold mb-1">Join or Create</h4>
-                <p class="text-sm" style="color: var(--muted);">Start a new workspace</p>
+                <h4 class="font-bold mb-1 font-head">Join or Create</h4>
+                <p class="text-xs text-muted-ui">Enroll with code or launch a section</p>
             </a>
         </div>
     </div>
