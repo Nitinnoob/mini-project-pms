@@ -21,7 +21,7 @@ PMS is an academic project management web platform built in native PHP 8.x, MySQ
 
 2. **Placement**:
    - Clone or copy this repository into your XAMPP web root:
-     `C:\xampp\htdocs\pjtmgmt2`
+     `C:\xampp\htdocs`
 
 3. **Database Setup**:
    - Open phpMyAdmin: `http://localhost/phpmyadmin/`
@@ -30,5 +30,5 @@ PMS is an academic project management web platform built in native PHP 8.x, MySQ
    - Check connection settings in `dbs.php` (default: host `localhost`, user `root`, password ``, database `pms`).
 
 4. **Running the Application**:
-   - Open `http://localhost/pjtmgmt2/login.php` or `http://localhost/pjtmgmt2/registers.php`.
+   - Open `http://localhost/mini-project-pms/login.php` or `http://localhost/mini-project-pms/registers.php`.
    - Log in or register an account, and navigate classrooms through the central portal (`hub.php`).
