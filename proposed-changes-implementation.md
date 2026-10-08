@@ -24,7 +24,8 @@ Transform PMS from a Kanban/task tracker into a lean, guide-centered academic pr
 
 ## 4. Phase-by-Phase Implementation
 
-### Phase 0: Prep
+### Phase 0: Prep [COMPLETED]
+> **Status: Completed** — Branch `lean-meeting-engine` & tag `pre-lean-pivot` created, DB backed up, rules synced, questions confirmed, removal targets mapped.
 1. Create git branch and tag; back up current database.
 2. Update `AGENTS.md`: Lift `demo_seed.sql` edit restriction; enforce "SQL only in repositories and endpoints, never in views".
 3. Ask coordinator the confirmation questions above.
