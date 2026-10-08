@@ -28,7 +28,7 @@
                         <i class="fas fa-envelope-open-text text-xl flex-none" style="color: var(--accent-2);"></i>
                         <div class="min-w-0">
                             <p class="font-semibold text-sm">
-                                Invitation to join <span class="font-head"><?php echo htmlspecialchars($inv['name']); ?></span>
+                                Invitation to join <span class="font-head"><?php echo e($inv['name']); ?></span>
                             </p>
                             <p class="text-xs text-muted-ui mt-1">A project leader invited you to their team. Accepting will add you to their roster.</p>
                         </div>
@@ -38,7 +38,7 @@
                                 class="invite-respond-btn btn-ui px-4 py-2 text-xs font-semibold transition"
                                 style="background: var(--accent); color: var(--bg); border-color: var(--accent);"
                                 data-project-id="<?php echo $inv['id']; ?>"
-                                data-classroom-id="<?php echo htmlspecialchars($viewData['classroom_id']); ?>"
+                                data-classroom-id="<?php echo e($viewData['classroom_id']); ?>"
                                 data-invite-action="accept_invite">
                             <i class="fas fa-check mr-1"></i> Accept
                         </button>
@@ -46,7 +46,7 @@
                                 class="invite-respond-btn btn-ui px-4 py-2 text-xs font-semibold transition"
                                 style="color: var(--danger); border-color: var(--danger);"
                                 data-project-id="<?php echo $inv['id']; ?>"
-                                data-classroom-id="<?php echo htmlspecialchars($viewData['classroom_id']); ?>"
+                                data-classroom-id="<?php echo e($viewData['classroom_id']); ?>"
                                 data-invite-action="decline_invite">
                             Decline
                         </button>
@@ -72,9 +72,9 @@
                     $isInvited = ($proj['my_status'] === 'Invited');
                 ?>
                 <div class="card p-6 flex flex-col hover:border-[color:var(--accent-2)] transition-colors">
-                    <h4 class="text-xl font-bold mb-2 truncate"><?php echo htmlspecialchars($proj['name']); ?></h4>
+                    <h4 class="text-xl font-bold mb-2 truncate"><?php echo e($proj['name']); ?></h4>
                     <p class="text-sm text-muted-ui mb-4 flex-1 overflow-hidden" style="display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical;">
-                        <?php echo htmlspecialchars($proj['description'] ?: 'No description provided.'); ?>
+                        <?php echo e($proj['description'] ?: 'No description provided.'); ?>
                     </p>
                     <div class="flex justify-between items-center pt-4 border-t border-ui">
                         <div class="text-xs font-semibold text-muted-ui flex items-center gap-1">
@@ -86,7 +86,8 @@
                         </span>
                         <?php elseif ($isPending): ?>
                         <form method="POST" action="manage_join_request.php" class="inline">
-                            <input type="hidden" name="classroom_id" value="<?php echo htmlspecialchars($viewData['classroom_id']); ?>">
+                            <?php echo csrf_field(); ?>
+                            <input type="hidden" name="classroom_id" value="<?php echo e($viewData['classroom_id']); ?>">
                             <input type="hidden" name="project_id" value="<?php echo $proj['id']; ?>">
                             <input type="hidden" name="user_id" value="<?php echo $_SESSION['user_id']; ?>">
                             <input type="hidden" name="action" value="withdraw">
@@ -96,7 +97,8 @@
                         </form>
                         <?php else: ?>
                         <form method="POST" action="request_join.php">
-                            <input type="hidden" name="classroom_id" value="<?php echo htmlspecialchars($viewData['classroom_id']); ?>">
+                            <?php echo csrf_field(); ?>
+                            <input type="hidden" name="classroom_id" value="<?php echo e($viewData['classroom_id']); ?>">
                             <input type="hidden" name="project_id" value="<?php echo $proj['id']; ?>">
                             <button type="submit" class="btn-ui px-4 py-1.5 text-xs font-semibold hover-overlay-medium transition" style="color: var(--accent); border-color: var(--accent);">
                                 Request to Join
@@ -120,15 +122,22 @@
 
                     document.querySelectorAll('.invite-respond-btn').forEach(function (b) { b.disabled = true; });
 
+                    var csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+                    var headers = { 'Content-Type': 'application/x-www-form-urlencoded' };
+                    if (csrfToken) headers['X-CSRF-Token'] = csrfToken;
+
+                    var params = {
+                        classroom_id: classroomId,
+                        project_id: projectId,
+                        user_id: <?php echo (int)$_SESSION['user_id']; ?>,
+                        action: inviteAction
+                    };
+                    if (csrfToken) params.csrf_token = csrfToken;
+
                     fetch('handle_invitation.php', {
                         method: 'POST',
-                        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                        body: new URLSearchParams({
-                            classroom_id: classroomId,
-                            project_id: projectId,
-                            user_id: <?php echo (int)$_SESSION['user_id']; ?>,
-                            action: inviteAction
-                        })
+                        headers: headers,
+                        body: new URLSearchParams(params)
                     })
                     .then(function (res) { return res.json(); })
                     .then(function (data) {

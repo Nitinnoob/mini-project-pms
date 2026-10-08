@@ -36,10 +36,10 @@ $isMentor  = !empty($viewData['isTeacherDrilldown'])
                             <?php echo $p['week_state'] === 'current' ? 'border-accent' : 'border-ui'; ?>
                             <?php echo $p['is_merged'] ? 'opacity-50' : ''; ?>"
                      <?php echo $p['week_state'] === 'current' ? 'style="border-color: var(--accent-2);"' : ''; ?>
-                     title="<?php echo htmlspecialchars($p['date_from'] . ' → ' . $p['date_to']); ?>">
-                    <div class="font-semibold font-head truncate"><?php echo htmlspecialchars($p['label']); ?></div>
+                     title="<?php echo e($p['date_from'] . ' → ' . $p['date_to']); ?>">
+                    <div class="font-semibold font-head truncate"><?php echo e($p['label']); ?></div>
                     <div class="text-muted-ui font-mono-ui mt-0.5">
-                        <?php echo htmlspecialchars(date('M j', strtotime($p['date_from']))); ?>
+                        <?php echo e(date('M j', strtotime($p['date_from']))); ?>
                     </div>
                     <?php if ($p['is_current']): ?>
                         <div class="mt-1 font-semibold" style="color: var(--accent-2);">Current</div>
@@ -67,9 +67,9 @@ $isMentor  = !empty($viewData['isTeacherDrilldown'])
         <div class="border border-ui rounded p-4 mb-4 bg-raised">
             <div class="flex justify-between items-center mb-2 flex-wrap gap-2">
                 <div class="flex items-center gap-2">
-                    <h4 class="font-semibold"><?php echo htmlspecialchars($p['label']); ?></h4>
+                    <h4 class="font-semibold"><?php echo e($p['label']); ?></h4>
                     <span class="text-xs text-muted-ui font-mono-ui">
-                        <?php echo htmlspecialchars(date('M j', strtotime($p['date_from'])) . ' – ' . date('M j', strtotime($p['date_to']))); ?>
+                        <?php echo e(date('M j', strtotime($p['date_from'])) . ' – ' . date('M j', strtotime($p['date_to']))); ?>
                     </span>
                     <?php if ($p['is_current']): ?>
                         <span class="badge" style="background: var(--accent-2); color: var(--bg);">Current</span>
@@ -88,7 +88,7 @@ $isMentor  = !empty($viewData['isTeacherDrilldown'])
             <?php if ($p['merged_from']): ?>
                 <p class="text-xs text-muted-ui mb-3">
                     <i class="fas fa-code-branch mr-1"></i>
-                    This phase also covers <?php echo htmlspecialchars(implode(', ', $p['merged_from'])); ?>.
+                    This phase also covers <?php echo e(implode(', ', $p['merged_from'])); ?>.
                 </p>
             <?php endif; ?>
 
@@ -96,18 +96,18 @@ $isMentor  = !empty($viewData['isTeacherDrilldown'])
                 <p class="text-sm text-muted-ui mb-3">No submission for this phase.</p>
             <?php else: ?>
                 <p class="text-sm font-semibold mt-2">Work Summary:</p>
-                <p class="text-sm text-muted-ui mb-2"><?php echo nl2br(htmlspecialchars($log['work_summary'] ?? '')); ?></p>
+                <p class="text-sm text-muted-ui mb-2"><?php echo nl2br(e($log['work_summary'] ?? '')); ?></p>
 
                 <p class="text-sm font-semibold">Next Steps:</p>
-                <p class="text-sm text-muted-ui mb-3"><?php echo nl2br(htmlspecialchars($log['next_steps'] ?? '')); ?></p>
+                <p class="text-sm text-muted-ui mb-3"><?php echo nl2br(e($log['next_steps'] ?? '')); ?></p>
 
                 <?php if (!empty($log['files'])): ?>
                     <p class="text-sm font-semibold">Attachments:</p>
                     <div class="flex flex-wrap gap-2 mt-1 mb-3">
                         <?php foreach ($log['files'] as $f): ?>
-                            <a href="<?php echo htmlspecialchars($f['file_path']); ?>" download
+                            <a href="<?php echo e($f['file_path']); ?>" download
                                class="inline-flex items-center gap-2 px-3 py-1 text-xs rounded bg-overlay-subtle border border-ui hover:border-accent transition text-muted-ui hover:text-accent">
-                                <i class="fas fa-paperclip"></i> <?php echo htmlspecialchars($f['file_name']); ?>
+                                <i class="fas fa-paperclip"></i> <?php echo e($f['file_name']); ?>
                             </a>
                         <?php endforeach; ?>
                     </div>
@@ -116,7 +116,7 @@ $isMentor  = !empty($viewData['isTeacherDrilldown'])
                 <?php if (!empty($log['mentor_remarks'])): ?>
                     <div class="mt-4 p-3 rounded text-sm bg-overlay-subtle border border-ui">
                         <p class="font-semibold mb-1"><i class="fas fa-comment-dots text-muted-ui me-2"></i>Mentor Remarks</p>
-                        <p class="text-muted-ui"><?php echo nl2br(htmlspecialchars($log['mentor_remarks'] ?? '')); ?></p>
+                        <p class="text-muted-ui"><?php echo nl2br(e($log['mentor_remarks'] ?? '')); ?></p>
                     </div>
                 <?php endif; ?>
 
@@ -126,7 +126,7 @@ $isMentor  = !empty($viewData['isTeacherDrilldown'])
                         <div class="flex flex-col gap-1">
                             <?php foreach ($log['attendance'] as $att): ?>
                                 <div class="flex justify-between items-center text-xs">
-                                    <span><?php echo htmlspecialchars($att['username']); ?></span>
+                                    <span><?php echo e($att['username']); ?></span>
                                     <?php if ($att['present']): ?>
                                         <span class="font-semibold" style="color: var(--status-green);"><i class="fas fa-check me-1"></i>Present</span>
                                     <?php else: ?>
@@ -156,7 +156,7 @@ $isMentor  = !empty($viewData['isTeacherDrilldown'])
             ?>
                 <div class="mt-4 flex justify-end pt-3 border-t border-ui">
                     <button onclick="openMentorReviewModal(<?php echo $wk; ?>, <?php echo $log ? $log['id'] : 'null'; ?>, this.getAttribute('data-log'))"
-                            data-log="<?php echo htmlspecialchars($logJson); ?>"
+                            data-log="<?php echo e($logJson); ?>"
                             class="btn-ui px-4 py-2 text-xs font-semibold hover-overlay-medium transition" style="color: var(--accent-2); border-color: var(--accent-2);">
                         <i class="fas fa-clipboard-check me-2"></i> Mentor Review
                     </button>

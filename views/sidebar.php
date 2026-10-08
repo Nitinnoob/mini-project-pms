@@ -68,8 +68,8 @@
                                     <?php endif; ?>
                                 </div>
                                 <div>
-                                    <p class="text-sm"><span class="font-semibold"><?php echo htmlspecialchars($log['username']); ?></span> <?php echo htmlspecialchars($log['details']); ?></p>
-                                    <span class="text-xs text-muted-ui"><?php echo htmlspecialchars(date('M j, g:i A', strtotime($log['created_at']))); ?></span>
+                                    <p class="text-sm"><span class="font-semibold"><?php echo e($log['username']); ?></span> <?php echo e($log['details']); ?></p>
+                                    <span class="text-xs text-muted-ui"><?php echo e(date('M j, g:i A', strtotime($log['created_at']))); ?></span>
                                 </div>
                             </div>
                         <?php endforeach; ?>
@@ -91,11 +91,11 @@
                                     <i class="fas fa-file-alt"></i>
                                 </div>
                                 <div class="min-w-0">
-                                    <a href="<?php echo htmlspecialchars($file['file_path']); ?>" target="_blank" class="block text-sm font-semibold truncate hover:text-accent transition"><?php echo htmlspecialchars($file['file_name']); ?></a>
-                                    <span class="block text-xs text-muted-ui truncate">by <?php echo htmlspecialchars($file['uploader_name']); ?></span>
+                                    <a href="<?php echo e($file['file_path']); ?>" target="_blank" class="block text-sm font-semibold truncate hover:text-accent transition"><?php echo e($file['file_name']); ?></a>
+                                    <span class="block text-xs text-muted-ui truncate">by <?php echo e($file['uploader_name']); ?></span>
                                 </div>
                             </div>
-                            <a href="<?php echo htmlspecialchars($file['file_path']); ?>" download class="text-muted-ui hover:text-accent-2 ml-2"><i class="fas fa-download"></i></a>
+                            <a href="<?php echo e($file['file_path']); ?>" download class="text-muted-ui hover:text-accent-2 ml-2"><i class="fas fa-download"></i></a>
                         </div>
                         <?php endforeach; ?>
                     <?php else: ?>

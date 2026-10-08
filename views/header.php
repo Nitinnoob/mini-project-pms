@@ -4,7 +4,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PMS - <?php echo htmlspecialchars($viewData['actualView']); ?> view</title>
+    <meta name="csrf-token" content="<?php echo e(csrf_token()); ?>">
+    <title>PMS - <?php echo e($viewData['actualView']); ?> view</title>
     <script>
         // Apply saved theme before anything paints, so there's no flash
         // of light mode for users who've chosen dark. Manual toggle only —
@@ -41,7 +42,7 @@
     <nav class="border-b border-ui bg-raised py-3 px-6 flex justify-between items-center sticky top-0 z-40">
         <div class="flex items-center gap-4">
             <a href="hub.php" class="flex items-center gap-4 hover:opacity-80 transition" title="Back to Hub">
-                <div class="p-2 rounded" style="background: var(--accent); border-radius: var(--radius);">
+                <div class="p-2 pms-brand-mark">
                     <i class="fas fa-layer-group" style="color: var(--bg);"></i>
                 </div>
                 <h1 class="font-bold text-xl tracking-tight font-head">PMS</h1>

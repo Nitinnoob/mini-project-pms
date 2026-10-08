@@ -1,10 +1,6 @@
 <?php
-session_start();
-if (!isset($_SESSION['user_id'])) {
-    header("Location: login.php");
-    exit;
-}
-require 'dbs.php';
+require_once 'bootstrap.php';
+require_login();
 
 $modeSlug = 'teacher'; // Teacher theme for classroom creation
 $username = htmlspecialchars($_SESSION['username'] ?? 'User');
@@ -13,7 +9,8 @@ $initial = strtoupper(substr($username, 0, 1));
 $successMessage = false;
 $errorMessage = null;
 
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+if (is_post()) {
+    csrf_verify();
     $title = trim($_POST['classroom_name'] ?? 'New Classroom');
     $user_role = 'Admin'; // Creators of classrooms are automatically Admins (HOD/Teacher)
     
@@ -134,6 +131,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <?php endif; ?>
 
             <form id="createForm" method="POST" class="space-y-6">
+                <?php echo csrf_field(); ?>
                 <div>
                     <label class="block text-sm font-semibold mb-2">Classroom Name</label>
                     <input type="text" name="classroom_name" class="form-input" placeholder="e.g. 5th Sem CS Mini-Projects" required>

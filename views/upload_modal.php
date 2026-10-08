@@ -4,12 +4,13 @@
     <div class="bg-panel border border-ui p-6 rounded-lg w-full max-w-md shadow-xl" style="background: var(--bg); border-color: var(--border);">
         <div class="flex justify-between items-center mb-4 pb-4 border-b border-ui" style="border-color: var(--border);">
             <h2 class="text-xl font-bold font-head">Upload Deliverable</h2>
-            <button onclick="document.getElementById('uploadModal').classList.add('hidden')" class="text-muted-ui hover:text-accent transition"><i class="fas fa-times"></i></button>
+            <button data-modal-close="#uploadModal" onclick="document.getElementById('uploadModal').classList.add('hidden')" class="text-muted-ui hover:text-accent transition"><i class="fas fa-times"></i></button>
         </div>
         
         <form action="upload_deliverable.php" method="POST" enctype="multipart/form-data" class="space-y-4">
-            <input type="hidden" name="project_id" value="<?php echo htmlspecialchars($viewData['myProjectId']); ?>">
-            <input type="hidden" name="classroom_id" value="<?php echo htmlspecialchars($viewData['classroom_id']); ?>">
+            <?php echo csrf_field(); ?>
+            <input type="hidden" name="project_id" value="<?php echo e($viewData['myProjectId']); ?>">
+            <input type="hidden" name="classroom_id" value="<?php echo e($viewData['classroom_id']); ?>">
             <input type="hidden" name="task_id" id="upload_task_id" value="">
             
             <div>

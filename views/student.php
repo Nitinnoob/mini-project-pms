@@ -21,13 +21,13 @@
                         <button id="toggleCalendarBtn" class="tab-btn px-3 py-2 <?php echo $isCalendar ? 'active' : ''; ?>">Calendar</button>
                     </div>
                     <div class="flex gap-2">
-                        <button onclick="document.getElementById('addTaskModal').classList.remove('hidden')" class="btn-ui text-sm font-semibold px-4 py-2" style="background: var(--accent); color: var(--bg);">
+                        <button data-modal-target="#addTaskModal" onclick="document.getElementById('addTaskModal').classList.remove('hidden')" class="btn-ui text-sm font-semibold px-4 py-2" style="background: var(--accent); color: var(--bg);">
                             <i class="fas fa-plus me-2"></i>Add Task
                         </button>
-                        <button onclick="document.getElementById('reportModal').classList.remove('hidden')" class="btn-ui text-sm font-semibold px-4 py-2" style="background: var(--accent-2); color: var(--bg);">
+                        <button data-modal-target="#reportModal" onclick="document.getElementById('reportModal').classList.remove('hidden')" class="btn-ui text-sm font-semibold px-4 py-2" style="background: var(--accent-2); color: var(--bg);">
                             <i class="fas fa-file-word me-2"></i>Generate Report Assistant
                         </button>
-                        <button onclick="document.getElementById('escalationModal').classList.remove('hidden')" class="btn-ui text-sm font-semibold px-4 py-2 text-danger" style="background: transparent;">
+                        <button data-modal-target="#escalationModal" onclick="document.getElementById('escalationModal').classList.remove('hidden')" class="btn-ui text-sm font-semibold px-4 py-2 text-danger" style="background: transparent;">
                             <i class="fas fa-exclamation-triangle me-2"></i>Escalation flare
                         </button>
                     </div>

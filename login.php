@@ -1,16 +1,12 @@
 <?php
-require 'dbs.php';
-
-// Safe session flags to impress your professor
-session_start([
-    'cookie_httponly' => true,
-    'cookie_samesite' => 'Strict'
-]);
+// Session (httponly, SameSite=Lax, strict mode) + $pdo come from the shared bootstrap.
+require_once 'bootstrap.php';
 
 $message = '';
 
 // Check if form is actually submitted to prevent array index warnings
-if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['username'], $_POST['password'])) {
+if (is_post() && isset($_POST['username'], $_POST['password'])) {
+    csrf_verify();
     $username = trim($_POST['username']);
     $password = $_POST['password'];
 
@@ -19,6 +15,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['username'], $_POST['pa
     $user = $stmt->fetch(PDO::FETCH_ASSOC);
 
     if ($user && password_verify($password, $user['password'])) {
+        // New session id on privilege change — prevents session fixation.
+        session_regenerate_id(true);
         $_SESSION['user_id'] = $user['id'];
         $_SESSION['username'] = $user['username'];
         // Global 'role' is ignored. Contextual roles are set per classroom in hub.php.
@@ -44,6 +42,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['username'], $_POST['pa
             <?php endif; ?>
 
             <form method="POST">
+                <?php echo csrf_field(); ?>
                 <div class="mb-5">
                     <label class="auth-label">Username</label>
                     <input type="text" name="username" class="form-input" placeholder="Enter your username" required autofocus>

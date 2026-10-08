@@ -1,15 +1,16 @@
 <!-- Mentor Review Modal -->
 <div id="mentorReviewModal" class="modal-backdrop hidden fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
     <div class="card w-full max-w-lg p-6 relative">
-        <button onclick="document.getElementById('mentorReviewModal').classList.add('hidden')" class="absolute top-4 right-4 text-muted-ui hover:text-danger transition">
+        <button data-modal-close="#mentorReviewModal" onclick="document.getElementById('mentorReviewModal').classList.add('hidden')" class="absolute top-4 right-4 text-muted-ui hover:text-danger transition">
             <i class="fas fa-times text-xl"></i>
         </button>
         <h3 class="font-head font-semibold text-2xl mb-2">Mentor Review</h3>
         <p class="text-sm text-muted-ui mb-6">Week <span id="reviewModalWeekNumberDisplay" class="font-bold"></span></p>
 
         <form method="POST" action="submit_mentor_review.php" class="space-y-4">
-            <input type="hidden" name="project_id" value="<?php echo htmlspecialchars($viewData['myProjectId']); ?>">
-            <input type="hidden" name="classroom_id" value="<?php echo htmlspecialchars($viewData['classroom_id']); ?>">
+            <?php echo csrf_field(); ?>
+            <input type="hidden" name="project_id" value="<?php echo e($viewData['myProjectId']); ?>">
+            <input type="hidden" name="classroom_id" value="<?php echo e($viewData['classroom_id']); ?>">
             <input type="hidden" name="week_number" id="reviewModalWeekNumberInput" value="">
             
             <div>
@@ -32,7 +33,7 @@
                     <?php foreach ($viewData['actualTeamRoster'] ?? [] as $member): ?>
                         <div class="flex items-center justify-between">
                             <label class="text-sm cursor-pointer select-none" for="att_<?php echo $member['id']; ?>">
-                                <?php echo htmlspecialchars($member['username']); ?>
+                                <?php echo e($member['username']); ?>
                                 <?php if ($member['is_leader']): ?>
                                     <span class="ml-2 text-xs font-mono-ui px-1 py-0.5 rounded bg-overlay-medium text-muted-ui">Leader</span>
                                 <?php endif; ?>

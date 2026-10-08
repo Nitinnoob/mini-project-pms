@@ -4,13 +4,14 @@
     <div class="bg-panel border border-ui p-6 rounded-lg w-full max-w-md shadow-xl max-h-[90vh] overflow-y-auto" style="background: var(--bg); border-color: var(--border);">
         <div class="flex justify-between items-center mb-4 pb-4 border-b border-ui" style="border-color: var(--border);">
             <h2 class="text-xl font-bold font-head"><i class="fas fa-triangle-exclamation me-2 text-danger"></i>Raise a blocker</h2>
-            <button type="button" onclick="document.getElementById('escalationModal').classList.add('hidden')" class="text-muted-ui hover:text-accent transition" aria-label="Close"><i class="fas fa-times"></i></button>
+            <button type="button" data-modal-close="#escalationModal" onclick="document.getElementById('escalationModal').classList.add('hidden')" class="text-muted-ui hover:text-accent transition" aria-label="Close"><i class="fas fa-times"></i></button>
         </div>
         <p class="text-xs text-muted-ui mb-4">Stuck on something? Your mentor and project leader will be alerted straight away.</p>
 
         <form action="raise_issue.php" method="POST" class="space-y-4">
+            <?php echo csrf_field(); ?>
             <input type="hidden" name="project_id" value="<?php echo (int)$viewData['myProjectId']; ?>">
-            <input type="hidden" name="classroom_id" value="<?php echo htmlspecialchars($viewData['classroom_id']); ?>">
+            <input type="hidden" name="classroom_id" value="<?php echo e($viewData['classroom_id']); ?>">
 
             <div>
                 <label class="block text-sm font-semibold mb-1">Blocker title</label>
@@ -35,7 +36,7 @@
                     <select name="week_number" class="w-full bg-raised border border-ui rounded px-3 py-2 text-sm focus:outline-none focus:border-accent transition">
                         <option value="">Not phase-specific</option>
                         <?php foreach (($viewData['phases'] ?? []) as $p): ?>
-                            <option value="<?php echo (int)$p['week_number']; ?>" <?php echo !empty($p['is_current']) ? 'selected' : ''; ?>><?php echo htmlspecialchars($p['label']); ?></option>
+                            <option value="<?php echo (int)$p['week_number']; ?>" <?php echo !empty($p['is_current']) ? 'selected' : ''; ?>><?php echo e($p['label']); ?></option>
                         <?php endforeach; ?>
                     </select>
                 </div>
@@ -44,7 +45,7 @@
                     <select name="task_id" class="w-full bg-raised border border-ui rounded px-3 py-2 text-sm focus:outline-none focus:border-accent transition">
                         <option value="">No specific task</option>
                         <?php foreach (($viewData['tasks'] ?? []) as $statusGroup): foreach ($statusGroup as $t): ?>
-                            <option value="<?php echo (int)$t['id']; ?>"><?php echo htmlspecialchars(mb_strimwidth($t['title'], 0, 40, '...')); ?></option>
+                            <option value="<?php echo (int)$t['id']; ?>"><?php echo e(mb_strimwidth($t['title'], 0, 40, '...')); ?></option>
                         <?php endforeach; endforeach; ?>
                     </select>
                 </div>

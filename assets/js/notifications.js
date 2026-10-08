@@ -32,9 +32,15 @@
     }
 
     function post(params) {
+        var csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+        var headers = { 'Content-Type': 'application/x-www-form-urlencoded' };
+        if (csrfToken) {
+            headers['X-CSRF-Token'] = csrfToken;
+            params = Object.assign({}, params, { csrf_token: csrfToken });
+        }
         return fetch('notifications.php', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            headers: headers,
             body: new URLSearchParams(params)
         });
     }

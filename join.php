@@ -1,10 +1,6 @@
 <?php
-session_start();
-if (!isset($_SESSION['user_id'])) {
-    header("Location: login.php");
-    exit;
-}
-require 'dbs.php';
+require_once 'bootstrap.php';
+require_login();
 
 $username = htmlspecialchars($_SESSION['username'] ?? 'User');
 $initial = strtoupper(substr($username, 0, 1));
@@ -12,7 +8,8 @@ $error = '';
 $successMessage = false;
 $classroom_id = null;
 
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+if (is_post()) {
+    csrf_verify();
     $code = trim($_POST['invite_code'] ?? '');
     $usn = trim(strtoupper($_POST['usn'] ?? ''));
     
@@ -29,13 +26,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         // classroom (most notably the teacher who created it, already an
         // Admin member) shouldn't be forced through USN validation or shown
         // a "Joined Successfully!" as if this were a fresh join.
-        $stmtCheck = $pdo->prepare("SELECT role FROM classroom_members WHERE classroom_id = ? AND user_id = ?");
-        $stmtCheck->execute([$classroom_id, $_SESSION['user_id']]);
-        $existingMembership = $stmtCheck->fetch(PDO::FETCH_ASSOC);
+        $existingRole = classroom_role($pdo, $classroom_id, $_SESSION['user_id']);
 
-        if ($existingMembership) {
+        if ($existingRole !== null) {
             $alreadyMember = true;
-            $existingRole = $existingMembership['role'];
             $successMessage = true; // send them into the workspace, just don't claim a fresh join
         }
         // 1. Check USN Requirement
@@ -79,7 +73,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     <nav class="border-b border-ui bg-raised py-3 px-6 flex justify-between items-center" style="border-color: var(--border); background: var(--bg-raised);">
         <a href="hub.php" class="flex items-center gap-4 hover:opacity-80 transition">
-            <div class="p-2 rounded" style="background: var(--accent); border-radius: var(--radius);">
+            <div class="p-2 pms-brand-mark">
                 <i class="fas fa-layer-group" style="color: var(--bg);"></i>
             </div>
             <h1 class="font-bold text-xl tracking-tight">PMS</h1>
@@ -106,6 +100,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <?php endif; ?>
 
             <form method="POST" class="space-y-6">
+                <?php echo csrf_field(); ?>
                 <div>
                     <label class="block text-sm font-semibold mb-2" style="color: var(--muted);">Classroom Invite Code</label>
                     <input type="text" name="invite_code" value="<?php echo htmlspecialchars($code ?? ''); ?>" class="form-input code-input <?php echo $error ? 'shake' : ''; ?>" placeholder="XXXXXX" required maxlength="12">
@@ -113,10 +108,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 
                 <div>
                     <label class="block text-sm font-semibold mb-2" style="color: var(--muted);">Your USN <span class="text-xs font-normal opacity-70">(Required for Official Classrooms)</span></label>
-                    <input type="text" name="usn" class="form-input" placeholder="e.g. 1RG24CS015" style="width: 100%; padding: 0.75rem; border-radius: var(--radius); background: var(--bg); border: 1px solid var(--border); color: var(--text);">
+                    <input type="text" name="usn" class="form-input pms-input" placeholder="e.g. 1RG24CS015">
                 </div>
                 
-                <button type="submit" class="w-full py-3 font-semibold rounded hover:opacity-90 transition" style="background: var(--accent-2); color: var(--bg); border-radius: var(--radius);">
+                <button type="submit" class="w-full py-3 font-semibold pms-btn-primary hover:opacity-90 transition">
                     Join Workspace
                 </button>
             </form>

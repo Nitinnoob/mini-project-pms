@@ -11,13 +11,8 @@
  * Project name, USNs, guide and classroom are pre-filled from the database
  * for members of the project (or the classroom's teachers).
  */
-session_start();
-require 'dbs.php';
-
-if (!isset($_SESSION['user_id'])) {
-    header("Location: login.php");
-    exit;
-}
+require_once 'bootstrap.php';
+require_login();
 if (!class_exists('ZipArchive')) {
     http_response_code(500);
     exit('The PHP zip extension is not enabled, so the .docx template cannot be generated. Enable extension=zip in php.ini.');

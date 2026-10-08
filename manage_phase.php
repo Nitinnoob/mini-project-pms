@@ -4,14 +4,12 @@
 // This is a form POST handler, not JSON: the Phases tab posts plain forms and
 // bounces back to dashboard.php?tab=phases.
 
-session_start();
-require 'dbs.php';
+require_once 'bootstrap.php';
 require_once 'phase_engine.php';
+require_once 'repositories/project_repository.php';
+require_once 'repositories/phase_repository.php';
 
-if (!isset($_SESSION['user_id'])) {
-    header("Location: login.php");
-    exit;
-}
+require_login();
 
 $classroom_id = $_POST['classroom_id'] ?? null;
 $action       = $_POST['action'] ?? null;
@@ -23,10 +21,11 @@ function phase_back($classroom_id, $ok, $message)
     exit;
 }
 
-if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+if (!is_post()) {
     header("Location: dashboard.php");
     exit;
 }
+csrf_verify();
 
 if (!$classroom_id || !in_array($action, ['rename', 'merge', 'unmerge'], true)) {
     header("Location: dashboard.php");
@@ -36,15 +35,13 @@ if (!$classroom_id || !in_array($action, ['rename', 'merge', 'unmerge'], true)) 
 // Only the classroom coordinator may reshape the schedule. Matches the
 // $viewData['isCoordinator'] check in dashboard.php so the UI and the
 // endpoint agree on who gets edit controls.
-$stmtCoord = $pdo->prepare("SELECT created_by, start_date, end_date FROM classrooms WHERE id = ?");
-$stmtCoord->execute([$classroom_id]);
-$classroom = $stmtCoord->fetch(PDO::FETCH_ASSOC);
+$classroom = classroom_find_schedule($pdo, $classroom_id);
 
 if (!$classroom) {
     header("Location: hub.php");
     exit;
 }
-if ((int)$classroom['created_by'] !== (int)$_SESSION['user_id']) {
+if (!is_classroom_coordinator($pdo, $classroom_id, $_SESSION['user_id'])) {
     phase_back($classroom_id, false, 'Only the classroom coordinator can rename or merge phases.');
 }
 
@@ -60,9 +57,7 @@ try {
     // never overwrites a label the coordinator already set.
     phase_seed($pdo, $classroom_id, $classroom['start_date'] ?? null, $classroom['end_date'] ?? null);
 
-    $stmtPhase = $pdo->prepare("SELECT 1 FROM classroom_phases WHERE classroom_id = ? AND week_number = ?");
-    $stmtPhase->execute([$classroom_id, $week_number]);
-    if (!$stmtPhase->fetch()) {
+    if (!phase_row_exists($pdo, $classroom_id, $week_number)) {
         phase_back($classroom_id, false, 'That phase does not exist in this classroom schedule.');
     }
 
@@ -73,14 +68,12 @@ try {
         }
         $label = mb_substr($label, 0, 120);
 
-        $stmt = $pdo->prepare("UPDATE classroom_phases SET label = ? WHERE classroom_id = ? AND week_number = ?");
-        $stmt->execute([$label, $classroom_id, $week_number]);
+        phase_rename($pdo, $classroom_id, $week_number, $label);
         phase_back($classroom_id, true, 'Phase ' . $week_number . ' renamed to "' . $label . '".');
     }
 
     if ($action === 'unmerge') {
-        $stmt = $pdo->prepare("UPDATE classroom_phases SET merged_into_week = NULL WHERE classroom_id = ? AND week_number = ?");
-        $stmt->execute([$classroom_id, $week_number]);
+        phase_set_merge($pdo, $classroom_id, $week_number, null);
         phase_back($classroom_id, true, 'Phase ' . $week_number . ' is a standalone week again.');
     }
 
@@ -96,9 +89,7 @@ try {
 
     // The target must be a real, standalone phase. Merging into a phase that is
     // itself merged away would build a chain that phase_build_list() cannot resolve.
-    $stmtTarget = $pdo->prepare("SELECT merged_into_week FROM classroom_phases WHERE classroom_id = ? AND week_number = ?");
-    $stmtTarget->execute([$classroom_id, $target]);
-    $targetMerge = $stmtTarget->fetchColumn();
+    $targetMerge = phase_merge_target_of($pdo, $classroom_id, $target);
     if ($targetMerge === false) {
         phase_back($classroom_id, false, 'The phase you picked no longer exists.');
     }
@@ -109,14 +100,11 @@ try {
     // Merging a phase that already collects other phases would strand those
     // weeks: they would roll up into a target that is itself no longer a
     // standalone week. Force the coordinator to unmerge first.
-    $stmtAbsorbs = $pdo->prepare("SELECT COUNT(*) FROM classroom_phases WHERE classroom_id = ? AND merged_into_week = ?");
-    $stmtAbsorbs->execute([$classroom_id, $target]);
-    if ((int)$stmtAbsorbs->fetchColumn() > 0) {
+    if (phase_absorbed_count($pdo, $classroom_id, $target) > 0) {
         phase_back($classroom_id, false, 'That phase has other weeks merged into it. Unmerge those first.');
     }
 
-    $stmt = $pdo->prepare("UPDATE classroom_phases SET merged_into_week = ? WHERE classroom_id = ? AND week_number = ?");
-    $stmt->execute([$target, $classroom_id, $week_number]);
+    phase_set_merge($pdo, $classroom_id, $week_number, $target);
     phase_back($classroom_id, true, 'Phase ' . $week_number . ' now rolls up into Phase ' . $target . '.');
 
 } catch (PDOException $e) {

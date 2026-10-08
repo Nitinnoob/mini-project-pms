@@ -1,13 +1,16 @@
 <?php
-session_start();
-require 'dbs.php';
+require_once 'bootstrap.php';
 require_once 'phase_engine.php';
 require_once 'notify.php';
+require_once 'repositories/task_repository.php';
+require_once 'repositories/project_repository.php';
 
-if (!isset($_SESSION['user_id']) || $_SERVER['REQUEST_METHOD'] !== 'POST') {
-    header("Location: login.php");
+require_login();
+if (!is_post()) {
+    header("Location: dashboard.php");
     exit;
 }
+csrf_verify();
 
 $project_id   = $_POST['project_id'] ?? null;
 $classroom_id = $_POST['classroom_id'] ?? null;
@@ -19,23 +22,14 @@ $week_number  = $_POST['week_number'] ?? null;
 
 if ($project_id && $title !== '') {
     // Only active members of THIS project may add tasks.
-    $stmtCheck = $pdo->prepare("SELECT 1 FROM project_members WHERE project_id = ? AND user_id = ? AND join_status = 'Active'");
-    $stmtCheck->execute([$project_id, $_SESSION['user_id']]);
-
-    if ($stmtCheck->fetch()) {
+    if (is_active_project_member($pdo, $project_id, $_SESSION['user_id'])) {
         // Assignee must actually be on the project, otherwise assignment is meaningless.
-        if ($assigned_to !== null) {
-            $stmtAsg = $pdo->prepare("SELECT 1 FROM project_members WHERE project_id = ? AND user_id = ? AND join_status = 'Active'");
-            $stmtAsg->execute([$project_id, $assigned_to]);
-            if (!$stmtAsg->fetch()) {
-                $assigned_to = null;
-            }
+        if ($assigned_to !== null && !is_active_project_member($pdo, $project_id, $assigned_to)) {
+            $assigned_to = null;
         }
 
         // Derive the classroom schedule so we can validate the chosen phase.
-        $stmtCrs = $pdo->prepare("SELECT c.start_date, c.end_date FROM classrooms c JOIN projects p ON p.classroom_id = c.id WHERE p.id = ? AND p.classroom_id = ?");
-        $stmtCrs->execute([$project_id, $classroom_id]);
-        $crs = $stmtCrs->fetch(PDO::FETCH_ASSOC) ?: [];
+        $crs = project_find_schedule($pdo, $project_id, $classroom_id) ?? [];
 
         $startDate = $crs['start_date'] ?? null;
         $endDate   = $crs['end_date'] ?? null;
@@ -56,26 +50,21 @@ if ($project_id && $title !== '') {
             $weekNumber = phase_for_due_date($startDate, $endDate, $due_date);
         }
 
-        if (phase_tasks_column_exists($pdo)) {
-            // milestone stays populated for backward compatibility with any
-            // older views still reading it, but week_number is authoritative.
-            $legacyMilestone = 'Synopsis';
-            if ($totalWeeks > 0 && $weekNumber !== null) {
-                $q = max(1, (int)ceil($weekNumber / max(1, $totalWeeks) * 4));
-                $legacyMilestone = ['Synopsis', 'Phase 1', 'Phase 2', 'Final Demo'][min(3, $q - 1)];
-            }
+        // milestone stays populated for backward compatibility with any
+        // older views still reading it, but week_number is authoritative.
+        $withWeek = phase_tasks_column_exists($pdo);
+        task_create($pdo, [
+            'project_id'  => $project_id,
+            'title'       => $title,
+            'assigned_to' => $assigned_to,
+            'priority'    => $priority,
+            'milestone'   => $withWeek ? task_legacy_milestone($weekNumber, $totalWeeks) : 'Synopsis',
+            'week_number' => $weekNumber,
+            'due_date'    => $due_date,
+        ], $withWeek);
 
-            $stmt = $pdo->prepare("INSERT INTO tasks (project_id, title, assigned_to, priority, milestone, week_number, due_date, status) VALUES (?, ?, ?, ?, ?, ?, ?, 'todo')");
-            $stmt->execute([$project_id, $title, $assigned_to, $priority, $legacyMilestone, $weekNumber, $due_date]);
-        } else {
-            // Phase 4 migration not applied — insert without week_number.
-            $stmt = $pdo->prepare("INSERT INTO tasks (project_id, title, assigned_to, priority, milestone, due_date, status) VALUES (?, ?, ?, ?, ?, ?, 'todo')");
-            $stmt->execute([$project_id, $title, $assigned_to, $priority, 'Synopsis', $due_date]);
-        }
-
-        $stmtLog = $pdo->prepare("INSERT INTO activity_log (project_id, user_id, action, details) VALUES (?, ?, 'Created Task', ?)");
         $weekNote = $weekNumber !== null ? " [Phase $weekNumber]" : '';
-        $stmtLog->execute([$project_id, $_SESSION['user_id'], "Created task: " . $title . $weekNote]);
+        activity_log_add($pdo, $project_id, $_SESSION['user_id'], 'Created Task', "Created task: " . $title . $weekNote);
 
         if ($assigned_to !== null && $assigned_to !== (int)$_SESSION['user_id']) {
             notify_user($pdo, $assigned_to, 'task_assigned',

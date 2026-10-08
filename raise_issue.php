@@ -1,12 +1,16 @@
 <?php
-session_start();
-require 'dbs.php';
+require_once 'bootstrap.php';
 require_once 'notify.php';
+require_once 'repositories/project_repository.php';
+require_once 'repositories/task_repository.php';
+require_once 'repositories/issue_repository.php';
 
-if (!isset($_SESSION['user_id']) || $_SERVER['REQUEST_METHOD'] !== 'POST') {
-    header("Location: login.php");
+require_login();
+if (!is_post()) {
+    header("Location: dashboard.php");
     exit;
 }
+csrf_verify();
 
 $uid          = (int)$_SESSION['user_id'];
 $project_id   = (int)($_POST['project_id'] ?? 0);
@@ -26,33 +30,32 @@ if (!$project_id || !$classroom_id || $title === '' || $description === ''
 }
 
 // Only active members of this project (in this classroom) may raise a blocker.
-$stmtAuth = $pdo->prepare("
-    SELECT 1 FROM project_members pm JOIN projects p ON pm.project_id = p.id
-    WHERE pm.project_id = ? AND pm.user_id = ? AND pm.join_status = 'Active' AND p.classroom_id = ?
-");
-$stmtAuth->execute([$project_id, $uid, $classroom_id]);
-if (!$stmtAuth->fetch()) {
+if (!is_active_project_member($pdo, $project_id, $uid, $classroom_id)) {
     header("Location: $back");
     exit;
 }
 
 // The impacted task must belong to this project.
-if ($task_id !== null) {
-    $stmtT = $pdo->prepare("SELECT 1 FROM tasks WHERE id = ? AND project_id = ?");
-    $stmtT->execute([$task_id, $project_id]);
-    if (!$stmtT->fetch()) $task_id = null;
+if ($task_id !== null && !task_exists_in_project($pdo, $task_id, $project_id)) {
+    $task_id = null;
 }
 
 try {
-    $stmt = $pdo->prepare("INSERT INTO issues (project_id, raised_by, title, description, week_number, task_id, severity, status) VALUES (?, ?, ?, ?, ?, ?, ?, 'open')");
-    $stmt->execute([$project_id, $uid, mb_substr($title, 0, 200), $description, $week_number, $task_id, $severity]);
+    issue_create($pdo, [
+        'project_id'  => $project_id,
+        'raised_by'   => $uid,
+        'title'       => $title,
+        'description' => $description,
+        'week_number' => $week_number,
+        'task_id'     => $task_id,
+        'severity'    => $severity
+    ]);
 } catch (Throwable $e) {
     header("Location: $back&err=" . urlencode("Blockers are not enabled yet - re-import schema.sql."));
     exit;
 }
 
-$stmtLog = $pdo->prepare("INSERT INTO activity_log (project_id, user_id, action, details) VALUES (?, ?, 'Raised Issue', ?)");
-$stmtLog->execute([$project_id, $uid, "raised a " . $severity . " blocker: " . $title]);
+activity_log_add($pdo, $project_id, $uid, 'Raised Issue', "raised a " . $severity . " blocker: " . $title);
 
 $projName = notify_project_name($pdo, $project_id);
 $who = htmlspecialchars_decode($_SESSION['username'] ?? 'A teammate');

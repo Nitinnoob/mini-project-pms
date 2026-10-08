@@ -4,7 +4,7 @@
     <div class="bg-panel border border-ui p-6 rounded-lg w-full max-w-lg shadow-xl max-h-[90vh] overflow-y-auto" style="background: var(--bg); border-color: var(--border);">
         <div class="flex justify-between items-center mb-4 pb-4 border-b border-ui" style="border-color: var(--border);">
             <h2 class="text-xl font-bold font-head"><i class="fas fa-file-word me-2 text-accent"></i>VTU Report Assistant</h2>
-            <button type="button" onclick="document.getElementById('reportModal').classList.add('hidden')" class="text-muted-ui hover:text-accent transition" aria-label="Close"><i class="fas fa-times"></i></button>
+            <button type="button" data-modal-close="#reportModal" onclick="document.getElementById('reportModal').classList.add('hidden')" class="text-muted-ui hover:text-accent transition" aria-label="Close"><i class="fas fa-times"></i></button>
         </div>
 
         <p class="text-sm text-muted-ui mb-4">
@@ -44,7 +44,7 @@
             <li>
                 <label class="flex items-start gap-2 cursor-pointer">
                     <input type="checkbox" class="mt-1 vtu-check" data-idx="<?php echo $i; ?>">
-                    <span><?php echo htmlspecialchars($label); ?></span>
+                    <span><?php echo e($label); ?></span>
                 </label>
             </li>
             <?php endforeach; ?>

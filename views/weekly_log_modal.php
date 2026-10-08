@@ -1,15 +1,16 @@
 <!-- Weekly Log Modal -->
 <div id="weeklyLogModal" class="modal-backdrop hidden fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
     <div class="card w-full max-w-lg p-6 relative">
-        <button onclick="document.getElementById('weeklyLogModal').classList.add('hidden')" class="absolute top-4 right-4 text-muted-ui hover:text-danger transition">
+        <button data-modal-close="#weeklyLogModal" onclick="document.getElementById('weeklyLogModal').classList.add('hidden')" class="absolute top-4 right-4 text-muted-ui hover:text-danger transition">
             <i class="fas fa-times text-xl"></i>
         </button>
         <h3 class="font-head font-semibold text-2xl mb-2">Submit Weekly Log</h3>
         <p class="text-sm text-muted-ui mb-6">Week <span id="modalWeekNumberDisplay" class="font-bold"></span></p>
 
         <form method="POST" action="submit_weekly_log.php" enctype="multipart/form-data" class="space-y-4">
-            <input type="hidden" name="project_id" value="<?php echo htmlspecialchars($viewData['myProjectId']); ?>">
-            <input type="hidden" name="classroom_id" value="<?php echo htmlspecialchars($viewData['classroom_id']); ?>">
+            <?php echo csrf_field(); ?>
+            <input type="hidden" name="project_id" value="<?php echo e($viewData['myProjectId']); ?>">
+            <input type="hidden" name="classroom_id" value="<?php echo e($viewData['classroom_id']); ?>">
             <input type="hidden" name="week_number" id="modalWeekNumberInput" value="">
             
             <div>
