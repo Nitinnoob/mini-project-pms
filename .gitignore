@@ -17,12 +17,13 @@ Thumbs.db
 .vscode/
 .idea/
 
-# AI assistant config (local only)
+# AI assistant & planning docs (local only)
 .agents/
 .antigravityignore
 CLAUDE.md
 gemini.md
 GEMINI.md
 AGENTS.md
-docs/notebooklm/
-docs/study-vault/
+proposed-changes*.md
+vibe-code-audit-report.md
+docs/
