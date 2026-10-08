@@ -5,7 +5,7 @@ const escapeHTML = (str) => {
     return div.innerHTML;
 };
 
-const TEACHER_TABS = ['groups', 'roster', 'marks', 'milestones', 'phases'];
+const TEACHER_TABS = ['groups', 'roster', 'marks', 'phases'];
 
 function switchTeacherTab(tab) {
     if (!TEACHER_TABS.includes(tab)) tab = 'groups';

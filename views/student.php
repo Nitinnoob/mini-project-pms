@@ -65,8 +65,7 @@
                 </div>
             </div>
 
-            <!-- Classroom Milestones & Countdown -->
-            <?php require __DIR__ . '/partials/milestone_widget.php'; ?>
+
 
             <!-- Continuous Internal Evaluation (CIE) Marks Summary -->
             <?php

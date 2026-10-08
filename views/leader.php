@@ -129,8 +129,7 @@
             </div>
             <?php endif; ?>
 
-            <!-- Classroom Milestones & Countdown -->
-            <?php require __DIR__ . '/partials/milestone_widget.php'; ?>
+
 
             <!-- Leader Tabs -->
             <div class="flex justify-between items-center border-b border-ui">

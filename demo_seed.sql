@@ -422,16 +422,16 @@ INSERT INTO project_members (project_id, user_id, is_leader, join_status) VALUES
 
 -- 7a. Weekly phases (1 phase = 1 week; teacher-facing labels)
 INSERT INTO classroom_phases (classroom_id, week_number, label, merged_into_week) VALUES
-(1, 1,  'Week 1: Synopsis & Literature Survey', NULL),
-(1, 2,  'Week 2: System Architecture & Design', NULL),
-(1, 3,  'Week 3: Database & Backend Setup', NULL),
-(1, 4,  'Week 4: Core Module Implementation', NULL),
-(1, 5,  'Week 5: Frontend Integration', NULL),
-(1, 6,  'Week 6: Testing & Bug Fixes', NULL),
-(1, 7,  'Week 7: Phase 2 Review', NULL),
-(1, 8,  'Week 8: VTU Report Draft', NULL),
-(1, 9,  'Week 9: Final Polish', NULL),
-(1, 10, 'Week 10: Final Demo & Viva', NULL);
+(1, 1,  'Week 1', NULL),
+(1, 2,  'Week 2', NULL),
+(1, 3,  'Week 3', NULL),
+(1, 4,  'Week 4', NULL),
+(1, 5,  'Week 5', NULL),
+(1, 6,  'Week 6', NULL),
+(1, 7,  'Week 7', NULL),
+(1, 8,  'Week 8', NULL),
+(1, 9,  'Week 9', NULL),
+(1, 10, 'Week 10', NULL);
 
 -- 7d. Marketplace: CHAITHRA AB is the only classmate without a team.
 -- Sameer (Hostel Management System, solo team) has invited her.

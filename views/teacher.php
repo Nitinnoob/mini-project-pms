@@ -11,7 +11,6 @@
                 <button id="btn-tab-groups" class="tab-btn active pb-2" onclick="switchTeacherTab('groups')">Project Groups</button>
                 <button id="btn-tab-roster" class="tab-btn pb-2" onclick="switchTeacherTab('roster')">Classroom</button>
                 <button id="btn-tab-marks" class="tab-btn pb-2" onclick="switchTeacherTab('marks')">Evaluation Marks</button>
-                <button id="btn-tab-milestones" class="tab-btn pb-2" onclick="switchTeacherTab('milestones')">Milestones</button>
                 <button id="btn-tab-phases" class="tab-btn pb-2" onclick="switchTeacherTab('phases')">Phases</button>
             </div>
 
@@ -92,93 +91,6 @@
                             <?php endforeach; ?>
                         <?php endif; ?>
                     </div>
-                </div>
-            </div>
-
-            <!-- TAB 4: Classroom Milestones (Coordinator-defined timeline targets with countdowns) -->
-            <div id="tab-milestones" class="view-pane flex-1 flex flex-col hidden">
-                <div class="mb-4 flex justify-between items-start">
-                    <div>
-                        <h2 class="text-2xl font-head font-semibold">Classroom Milestones</h2>
-                        <p class="text-muted-ui text-sm mt-1">
-                            Key academic timeline targets, submission deadlines, and viva dates with live countdown timers.
-                        </p>
-                    </div>
-                </div>
-
-                <?php if (!empty($viewData['isCoordinator'])): ?>
-                <!-- Add Milestone Form (Coordinator Only) -->
-                <div class="card p-5 mb-6 border-ui">
-                    <h3 class="font-head font-semibold text-sm mb-3 flex items-center gap-2">
-                        <i class="fas fa-plus-circle text-accent"></i> Create New Milestone
-                    </h3>
-                    <form method="POST" action="manage_milestone.php" class="grid grid-cols-1 md:grid-cols-[1fr_200px_auto] gap-3 items-end">
-                        <?php echo csrf_field(); ?>
-                        <input type="hidden" name="classroom_id" value="<?php echo e($viewData['classroom_id']); ?>">
-                        <input type="hidden" name="action" value="add">
-                        <div>
-                            <label class="block text-xs font-semibold text-muted-ui mb-1">Milestone Title</label>
-                            <input type="text" name="title" maxlength="255" placeholder="e.g. Synopsis Approval, Mid-Term Viva, Final Report" required
-                                   class="form-input text-sm w-full">
-                        </div>
-                        <div>
-                            <label class="block text-xs font-semibold text-muted-ui mb-1">Due Date</label>
-                            <input type="date" name="due_date" required class="form-input text-sm w-full">
-                        </div>
-                        <button type="submit" class="btn-ui px-4 py-2 text-xs font-semibold" style="background: var(--accent); color: var(--bg);">
-                            <i class="fas fa-plus mr-1"></i> Add Milestone
-                        </button>
-                    </form>
-                </div>
-                <?php endif; ?>
-
-                <!-- Milestones Table / List -->
-                <div class="card flex-1 flex flex-col p-4">
-                    <h3 class="font-head font-semibold text-sm mb-3">Timeline Targets</h3>
-                    <?php if (empty($viewData['classroomMilestones'])): ?>
-                        <div class="py-12 text-center text-muted-ui text-sm">
-                            <i class="fas fa-flag text-2xl text-muted-ui/50 mb-2"></i>
-                            <p class="font-medium">No milestones created yet.</p>
-                            <p class="text-xs text-muted-ui mt-1">Set academic milestones to track student progress towards submission dates.</p>
-                        </div>
-                    <?php else: ?>
-                        <div class="space-y-3 overflow-y-auto">
-                            <?php foreach ($viewData['classroomMilestones'] as $m): ?>
-                                <?php
-                                $badgeTone = $m['badge_class'] ?? 'badge-muted';
-                                ?>
-                                <div class="flex items-center justify-between p-3.5 bg-raised border border-ui rounded gap-4 flex-wrap">
-                                    <div class="flex-1 min-w-[200px]">
-                                        <div class="font-semibold text-sm flex items-center gap-2">
-                                            <i class="fas fa-flag text-xs" style="color: var(--accent);"></i>
-                                            <span><?php echo e($m['title']); ?></span>
-                                        </div>
-                                        <span class="block text-xs text-muted-ui font-mono-ui mt-1">
-                                            Target: <?php echo e($m['formatted_due_date']); ?>
-                                        </span>
-                                    </div>
-
-                                    <div class="flex items-center gap-3">
-                                        <span class="badge <?php echo $badgeTone; ?> font-mono-ui text-xs">
-                                            <?php echo e($m['countdown_label']); ?>
-                                        </span>
-
-                                        <?php if (!empty($viewData['isCoordinator'])): ?>
-                                        <form method="POST" action="manage_milestone.php" onsubmit="return confirm('Remove this milestone?');" class="inline">
-                                            <?php echo csrf_field(); ?>
-                                            <input type="hidden" name="classroom_id" value="<?php echo e($viewData['classroom_id']); ?>">
-                                            <input type="hidden" name="milestone_id" value="<?php echo (int)$m['id']; ?>">
-                                            <input type="hidden" name="action" value="delete">
-                                            <button type="submit" class="btn-ui px-2.5 py-1 text-xs text-rose-400 border-rose-500/30 hover:border-rose-500 hover:text-rose-300" title="Delete Milestone">
-                                                <i class="fas fa-trash"></i>
-                                            </button>
-                                        </form>
-                                        <?php endif; ?>
-                                    </div>
-                                </div>
-                            <?php endforeach; ?>
-                        </div>
-                    <?php endif; ?>
                 </div>
             </div>
 
@@ -307,9 +219,7 @@
                     </div>
                 </div>
 
-                <div class="mb-4">
-                    <?php require __DIR__ . '/partials/milestone_widget.php'; ?>
-                </div>
+
 
                 <div class="card flex-1 flex flex-col">
                     <div class="grid grid-cols-[1.5fr_130px_100px_90px_85px_70px_auto] gap-3 px-5 py-3 text-xs text-muted-ui font-mono-ui border-b border-ui items-center">
