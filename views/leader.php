@@ -7,7 +7,7 @@
             <div class="flex items-center justify-between bg-overlay-subtle border border-ui rounded px-4 py-3 mb-2">
                 <div class="flex items-center gap-3">
                     <span class="px-2 py-1 text-xs font-bold rounded uppercase tracking-wider" style="background: var(--accent-2); color: var(--bg);">Teacher Mode</span>
-                    <span class="font-semibold text-sm">Read-Only Audit: <?php echo htmlspecialchars($viewData['myProject']['name']); ?></span>
+                    <span class="font-semibold text-sm">Read-Only Audit: <?php echo e($viewData['myProject']['name']); ?></span>
                 </div>
                 <a href="dashboard.php?classroom_id=<?php echo urlencode($viewData['classroom_id']); ?>" class="btn-ui px-4 py-1.5 text-xs font-semibold hover-overlay-medium transition flex items-center gap-2" style="color: var(--accent-2); border-color: var(--accent-2);">
                     <i class="fas fa-arrow-left"></i> Back to Ledger
@@ -30,8 +30,8 @@
                     <div class="text-xs text-muted-ui mt-1">overall completion</div>
                 </div>
                 <div class="card stat-tile p-4">
-                    <div class="stat-num text-3xl"><?php echo htmlspecialchars((string)$viewData['daysToDeadline']); ?></div>
-                    <div class="text-xs text-muted-ui mt-1"><?php echo htmlspecialchars($viewData['deadlineLabel']); ?></div>
+                    <div class="stat-num text-3xl"><?php echo e((string)$viewData['daysToDeadline']); ?></div>
+                    <div class="text-xs text-muted-ui mt-1"><?php echo e($viewData['deadlineLabel']); ?></div>
                 </div>
             </div>
 
@@ -54,13 +54,13 @@
                     </div>
                     <div class="flex gap-2">
                     <?php if (empty($viewData['isTeacherDrilldown'])): ?>
-                    <button onclick="document.getElementById('addTaskModal').classList.remove('hidden')" class="btn-ui text-sm font-semibold px-4 py-2" style="background: var(--accent); color: var(--bg);">
+                    <button data-modal-target="#addTaskModal" onclick="document.getElementById('addTaskModal').classList.remove('hidden')" class="btn-ui text-sm font-semibold px-4 py-2" style="background: var(--accent); color: var(--bg);">
                         <i class="fas fa-plus me-2"></i>Add Task
                     </button>
-                    <button onclick="document.getElementById('reportModal').classList.remove('hidden')" class="btn-ui text-sm font-semibold px-4 py-2" style="background: var(--accent-2); color: var(--bg);">
+                    <button data-modal-target="#reportModal" onclick="document.getElementById('reportModal').classList.remove('hidden')" class="btn-ui text-sm font-semibold px-4 py-2" style="background: var(--accent-2); color: var(--bg);">
                         <i class="fas fa-file-word me-2"></i>Generate Report Assistant
                     </button>
-                    <button onclick="document.getElementById('escalationModal').classList.remove('hidden')" class="btn-ui text-sm font-semibold px-4 py-2 text-danger" style="background: transparent;">
+                    <button data-modal-target="#escalationModal" onclick="document.getElementById('escalationModal').classList.remove('hidden')" class="btn-ui text-sm font-semibold px-4 py-2 text-danger" style="background: transparent;">
                         <i class="fas fa-exclamation-triangle me-2"></i>Escalation flare
                     </button>
                     <?php endif; ?>
@@ -95,19 +95,21 @@
                                     <div class="w-8 h-8 rounded-full flex items-center justify-center font-bold text-xs bg-accent-2 text-bg">
                                         <?php echo strtoupper(substr($req['username'], 0, 1)); ?>
                                     </div>
-                                    <span class="font-semibold text-sm"><?php echo htmlspecialchars($req['username']); ?></span>
+                                    <span class="font-semibold text-sm"><?php echo e($req['username']); ?></span>
                                 </div>
                                 <div class="flex gap-2">
                                       <?php if (empty($viewData['isTeacherDrilldown'])): ?>
                                       <form method="POST" action="manage_join_request.php" class="inline">
-                                          <input type="hidden" name="classroom_id" value="<?php echo htmlspecialchars($viewData['classroom_id']); ?>">
+                                          <?php echo csrf_field(); ?>
+                                          <input type="hidden" name="classroom_id" value="<?php echo e($viewData['classroom_id']); ?>">
                                           <input type="hidden" name="project_id" value="<?php echo $viewData['myProjectId']; ?>">
                                           <input type="hidden" name="user_id" value="<?php echo $req['id']; ?>">
                                           <input type="hidden" name="action" value="accept">
                                           <button class="btn-ui px-3 py-1.5 text-xs font-semibold bg-accent text-bg hover:opacity-90">Accept</button>
                                       </form>
                                       <form method="POST" action="manage_join_request.php" class="inline">
-                                          <input type="hidden" name="classroom_id" value="<?php echo htmlspecialchars($viewData['classroom_id']); ?>">
+                                          <?php echo csrf_field(); ?>
+                                          <input type="hidden" name="classroom_id" value="<?php echo e($viewData['classroom_id']); ?>">
                                           <input type="hidden" name="project_id" value="<?php echo $viewData['myProjectId']; ?>">
                                           <input type="hidden" name="user_id" value="<?php echo $req['id']; ?>">
                                           <input type="hidden" name="action" value="decline">
@@ -128,13 +130,13 @@
                     <div class="space-y-4">
                         <?php foreach ($viewData['teamRoster'] as $m): ?>
                           <div class="flex items-center gap-4">
-                              <span class="status-dot <?php echo in_array($m['status'], ['red', 'amber'], true) ? $m['status'] : 'green'; ?>" title="<?php echo htmlspecialchars($m['status_note'] ?? ''); ?>" aria-label="<?php echo htmlspecialchars($m['status_note'] ?? ''); ?>"></span>
+                              <span class="status-dot <?php echo in_array($m['status'], ['red', 'amber'], true) ? $m['status'] : 'green'; ?>" title="<?php echo e($m['status_note'] ?? ''); ?>" aria-label="<?php echo e($m['status_note'] ?? ''); ?>"></span>
                               <div class="w-48 flex-none">
-                                  <div class="font-semibold text-sm"><?php echo htmlspecialchars($m['name']); ?></div>
-                                  <div class="text-xs text-muted-ui font-mono-ui"><?php echo htmlspecialchars($m['role']); ?></div>
+                                  <div class="font-semibold text-sm"><?php echo e($m['name']); ?></div>
+                                  <div class="text-xs text-muted-ui font-mono-ui"><?php echo e($m['role']); ?></div>
                               </div>
                               <div class="flex-1 min-w-0">
-                                  <div class="text-sm truncate mb-1 <?php echo $m['task'] === 'No tasks' ? 'text-muted-ui italic' : ''; ?>"><?php echo htmlspecialchars($m['task']); ?></div>
+                                  <div class="text-sm truncate mb-1 <?php echo $m['task'] === 'No tasks' ? 'text-muted-ui italic' : ''; ?>"><?php echo e($m['task']); ?></div>
                                   <div class="roster-bar-track h-1.5 w-full">
                                       <div class="roster-bar-fill h-full" style="width: <?php echo $m['percent']; ?>%; background: var(--accent);"></div>
                                   </div>
@@ -177,9 +179,9 @@
                                                 <?php echo strtoupper(substr($c['username'], 0, 1)); ?>
                                             </div>
                                             <div>
-                                                <span class="block font-semibold text-sm"><?php echo htmlspecialchars($c['username']); ?></span>
+                                                <span class="block font-semibold text-sm"><?php echo e($c['username']); ?></span>
                                                 <?php if (isset($c['usn'])): ?>
-                                                <span class="block text-xs text-muted-ui font-mono-ui"><?php echo htmlspecialchars($c['usn']); ?></span>
+                                                <span class="block text-xs text-muted-ui font-mono-ui"><?php echo e($c['usn']); ?></span>
                                                 <?php endif; ?>
                                             </div>
                                         </div>
@@ -218,18 +220,23 @@
                         btn.disabled = true;
                         btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Sending...';
 
+                        const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+                        const headers = { 'Content-Type': 'application/x-www-form-urlencoded' };
+                        if (csrfToken) headers['X-CSRF-Token'] = csrfToken;
+
+                        const params = {
+                            'classroom_id': classroomId,
+                            'project_id': projectId,
+                            'user_id': userId,
+                            'action': 'invite'
+                        };
+                        if (csrfToken) params.csrf_token = csrfToken;
+
                         // Send invitation via AJAX
                         fetch('handle_invitation.php', {
                             method: 'POST',
-                            headers: {
-                                'Content-Type': 'application/x-www-form-urlencoded',
-                            },
-                            body: new URLSearchParams({
-                                'classroom_id': classroomId,
-                                'project_id': projectId,
-                                'user_id': userId,
-                                'action': 'invite'
-                            })
+                            headers: headers,
+                            body: new URLSearchParams(params)
                         })
                         .then(response => response.json())
                         .then(data => {

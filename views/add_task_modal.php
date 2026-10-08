@@ -4,12 +4,13 @@
     <div class="bg-panel border border-ui p-6 rounded-lg w-full max-w-md shadow-xl" style="background: var(--bg); border-color: var(--border);">
         <div class="flex justify-between items-center mb-4 pb-4 border-b border-ui" style="border-color: var(--border);">
             <h2 class="text-xl font-bold font-head">Add New Task</h2>
-            <button onclick="document.getElementById('addTaskModal').classList.add('hidden')" class="text-muted-ui hover:text-accent transition"><i class="fas fa-times"></i></button>
+            <button data-modal-close="#addTaskModal" onclick="document.getElementById('addTaskModal').classList.add('hidden')" class="text-muted-ui hover:text-accent transition"><i class="fas fa-times"></i></button>
         </div>
         
         <form action="add_task.php" method="POST" class="space-y-4">
-            <input type="hidden" name="project_id" value="<?php echo htmlspecialchars($viewData['myProjectId']); ?>">
-            <input type="hidden" name="classroom_id" value="<?php echo htmlspecialchars($viewData['classroom_id']); ?>">
+            <?php echo csrf_field(); ?>
+            <input type="hidden" name="project_id" value="<?php echo e($viewData['myProjectId']); ?>">
+            <input type="hidden" name="classroom_id" value="<?php echo e($viewData['classroom_id']); ?>">
             
             <div>
                 <label class="block text-sm font-semibold mb-1">Task Title</label>
@@ -22,8 +23,8 @@
                     <option value="">Unassigned</option>
                     <?php if (!empty($viewData['actualTeamRoster'])): ?>
                         <?php foreach($viewData['actualTeamRoster'] as $member): ?>
-                            <option value="<?php echo htmlspecialchars($member['id']); ?>">
-                                <?php echo htmlspecialchars($member['username']); ?>
+                            <option value="<?php echo e($member['id']); ?>">
+                                <?php echo e($member['username']); ?>
                             </option>
                         <?php endforeach; ?>
                     <?php endif; ?>
@@ -36,7 +37,7 @@
                     <select name="week_number" class="w-full bg-raised border border-ui rounded px-3 py-2 text-sm focus:outline-none focus:border-accent transition">
                         <?php foreach ($viewData['phases'] as $p): ?>
                             <option value="<?php echo (int)$p['week_number']; ?>" <?php echo !empty($p['is_current']) ? 'selected' : ''; ?>>
-                                <?php echo htmlspecialchars($p['label'] . ' (' . date('M j', strtotime($p['date_from'])) . ' – ' . date('M j', strtotime($p['date_to'])) . ')'); ?>
+                                <?php echo e($p['label'] . ' (' . date('M j', strtotime($p['date_from'])) . ' – ' . date('M j', strtotime($p['date_to'])) . ')'); ?>
                             </option>
                         <?php endforeach; ?>
                     </select>

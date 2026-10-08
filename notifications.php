@@ -5,8 +5,7 @@
  *   POST notifications.php action=read id=<n>   (mark one read)
  *   POST notifications.php action=read_all      (mark all read)
  */
-session_start();
-require 'dbs.php';
+require_once 'bootstrap.php';
 
 header('Content-Type: application/json');
 
@@ -18,7 +17,8 @@ if (!isset($_SESSION['user_id'])) {
 $uid = (int)$_SESSION['user_id'];
 
 try {
-    if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    if (is_post()) {
+        csrf_verify(true);
         $action = $_POST['action'] ?? '';
         if ($action === 'read_all') {
             $pdo->prepare("UPDATE notifications SET is_read = 1 WHERE user_id = ?")->execute([$uid]);

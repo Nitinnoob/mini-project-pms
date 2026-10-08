@@ -1,11 +1,6 @@
 <?php
-session_start();
-if (!isset($_SESSION['user_id'])) {
-    header("Location: login.php");
-    exit;
-}
-
-require 'dbs.php';
+require_once 'bootstrap.php';
+require_login();
 
 $username = htmlspecialchars($_SESSION['username'] ?? 'User');
 $initial = strtoupper(substr($username, 0, 1));

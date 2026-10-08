@@ -1,20 +1,21 @@
 <?php
-session_start();
-require 'dbs.php';
+require_once 'bootstrap.php';
+require_once 'repositories/project_repository.php';
+require_once 'repositories/deliverable_repository.php';
 
-if (!isset($_SESSION['user_id']) || $_SERVER['REQUEST_METHOD'] !== 'POST') {
-    header("Location: login.php");
+require_login();
+if (!is_post()) {
+    header("Location: dashboard.php");
     exit;
 }
+csrf_verify();
 
 $classroom_id = $_POST['classroom_id'] ?? null;
 $project_id = $_POST['project_id'] ?? null;
-$task_id = !empty($_POST['task_id']) ? $_POST['task_id'] : null;
+$task_id = !empty($_POST['task_id']) ? (int)$_POST['task_id'] : null;
 
 // Validate user is active member or leader
-$stmtCheck = $pdo->prepare("SELECT 1 FROM project_members WHERE project_id = ? AND user_id = ? AND join_status = 'Active'");
-$stmtCheck->execute([$project_id, $_SESSION['user_id']]);
-if (!$stmtCheck->fetch()) {
+if (!is_active_project_member($pdo, $project_id, $_SESSION['user_id'])) {
     header("Location: dashboard.php?classroom_id=" . urlencode($classroom_id));
     exit;
 }
@@ -48,11 +49,8 @@ if (isset($_FILES['deliverable']) && $_FILES['deliverable']['error'] === UPLOAD_
     }
     
     if (move_uploaded_file($_FILES['deliverable']['tmp_name'], $targetPath)) {
-        $stmt = $pdo->prepare("INSERT INTO deliverables (project_id, task_id, uploaded_by, file_name, file_path) VALUES (?, ?, ?, ?, ?)");
-        $stmt->execute([$project_id, $task_id, $_SESSION['user_id'], $fileName, $targetPath]);
-        
-        $stmtLog = $pdo->prepare("INSERT INTO activity_log (project_id, user_id, action, details) VALUES (?, ?, 'Uploaded Deliverable', ?)");
-        $stmtLog->execute([$project_id, $_SESSION['user_id'], "Uploaded file: " . $fileName]);
+        deliverable_create($pdo, (int)$project_id, $task_id, (int)$_SESSION['user_id'], $fileName, $targetPath);
+        activity_log_add($pdo, (int)$project_id, (int)$_SESSION['user_id'], 'Uploaded Deliverable', "Uploaded file: " . $fileName);
     }
 }
 

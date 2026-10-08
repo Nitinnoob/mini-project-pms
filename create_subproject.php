@@ -1,10 +1,6 @@
 <?php
-session_start();
-if (!isset($_SESSION['user_id'])) {
-    header("Location: login.php");
-    exit;
-}
-require 'dbs.php';
+require_once 'bootstrap.php';
+require_login();
 
 $classroom_id = $_GET['classroom_id'] ?? null;
 if (!$classroom_id) {
@@ -13,11 +9,7 @@ if (!$classroom_id) {
 }
 
 // Guard 1: Verify classroom membership and require 'Team Member' role (no teachers / external users)
-$stmtMember = $pdo->prepare("SELECT role FROM classroom_members WHERE classroom_id = ? AND user_id = ?");
-$stmtMember->execute([$classroom_id, $_SESSION['user_id']]);
-$member = $stmtMember->fetch(PDO::FETCH_ASSOC);
-
-if (!$member || $member['role'] !== 'Team Member') {
+if (classroom_role($pdo, $classroom_id, $_SESSION['user_id']) !== 'Team Member') {
     header("Location: dashboard.php?classroom_id=" . urlencode($classroom_id));
     exit;
 }
@@ -38,7 +30,8 @@ $username = htmlspecialchars($_SESSION['username'] ?? 'User');
 $initial = strtoupper(substr($username, 0, 1));
 $error = '';
 
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+if (is_post()) {
+    csrf_verify();
     $name = trim($_POST['project_name'] ?? '');
     $desc = trim($_POST['project_desc'] ?? '');
     
@@ -122,6 +115,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <?php endif; ?>
 
             <form method="POST" class="space-y-6">
+                <?php echo csrf_field(); ?>
                 <div>
                     <label class="block text-sm font-semibold mb-2">Project Name</label>
                     <input type="text" name="project_name" class="form-input w-full" placeholder="e.g. AI-Powered Analytics" required>

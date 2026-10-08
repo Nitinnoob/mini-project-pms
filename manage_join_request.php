@@ -1,46 +1,32 @@
 <?php
-session_start();
-if (!isset($_SESSION['user_id'])) {
-    header("Location: login.php");
-    exit;
-}
-require 'dbs.php';
+require_once 'bootstrap.php';
 require_once 'notify.php';
+require_once 'repositories/membership_repository.php';
 
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $classroom_id = $_POST['classroom_id'] ?? null;
-    $project_id = $_POST['project_id'] ?? null;
-    $target_user_id = $_POST['user_id'] ?? null;
+require_login();
+
+if (is_post()) {
+    csrf_verify();
+
+    $classroom_id = !empty($_POST['classroom_id']) ? (int)$_POST['classroom_id'] : null;
+    $project_id = !empty($_POST['project_id']) ? (int)$_POST['project_id'] : null;
+    $target_user_id = !empty($_POST['user_id']) ? (int)$_POST['user_id'] : null;
     $action = $_POST['action'] ?? null;
 
     if ($classroom_id && $project_id && $target_user_id && in_array($action, ['accept', 'decline', 'withdraw'])) {
         if ($action === 'accept' || $action === 'decline') {
             // Only leaders can accept/decline requests
             // Validate that the currently logged in user is actually the leader of this project AND project is in this classroom
-            $stmtCheck = $pdo->prepare("
-                SELECT 1 FROM project_members pm
-                JOIN projects p ON pm.project_id = p.id
-                WHERE pm.project_id = ? AND pm.user_id = ? AND pm.is_leader = 1 AND pm.join_status = 'Active' AND p.classroom_id = ?
-            ");
-            $stmtCheck->execute([$project_id, $_SESSION['user_id'], $classroom_id]);
-
-            if ($stmtCheck->fetch()) {
+            if (is_project_leader($pdo, $project_id, $_SESSION['user_id'], $classroom_id)) {
                 if ($action === 'accept') {
                     // Fetch the classroom's configured max team size
-                    $stmtMax = $pdo->prepare("SELECT c.max_team_size FROM classrooms c JOIN projects p ON p.classroom_id = c.id WHERE p.id = ?");
-                    $stmtMax->execute([$project_id]);
-                    $maxSize = $stmtMax->fetchColumn();
-                    if ($maxSize === false) $maxSize = 10; // Fallback for classrooms created before this column existed
+                    $maxSize = project_get_classroom_max_team_size($pdo, $project_id);
 
                     // Check if the project already has max active members
-                    $stmtCount = $pdo->prepare("SELECT COUNT(*) FROM project_members WHERE project_id = ? AND join_status = 'Active'");
-                    $stmtCount->execute([$project_id]);
-                    $count = $stmtCount->fetchColumn();
+                    $count = project_member_active_count($pdo, $project_id);
 
                     if ($count < $maxSize) {
-                        $stmtUpdate = $pdo->prepare("UPDATE project_members SET join_status = 'Active' WHERE project_id = ? AND user_id = ? AND join_status = 'Pending'");
-                        $stmtUpdate->execute([$project_id, $target_user_id]);
-                        if ($stmtUpdate->rowCount() > 0) {
+                        if (project_member_update_status($pdo, $project_id, $target_user_id, 'Pending', 'Active')) {
                             notify_user($pdo, $target_user_id, 'join_accepted',
                                 'Your request to join ' . notify_project_name($pdo, $project_id) . ' was accepted.',
                                 'dashboard.php?classroom_id=' . urlencode($classroom_id));
@@ -48,9 +34,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     }
                 } elseif ($action === 'decline') {
                     // Remove the pending request entirely (or set to Declined)
-                    $stmtDelete = $pdo->prepare("DELETE FROM project_members WHERE project_id = ? AND user_id = ? AND join_status = 'Pending'");
-                    $stmtDelete->execute([$project_id, $target_user_id]);
-                    if ($stmtDelete->rowCount() > 0) {
+                    if (project_member_delete_by_status($pdo, $project_id, $target_user_id, 'Pending')) {
                         notify_user($pdo, $target_user_id, 'join_declined',
                             'Your request to join ' . notify_project_name($pdo, $project_id) . ' was declined. You can apply to another team or start your own project.',
                             'dashboard.php?classroom_id=' . urlencode($classroom_id));
@@ -59,17 +43,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
         } elseif ($action === 'withdraw') {
             // Only the requesting user can withdraw their own request
-            $stmtCheck = $pdo->prepare("
-                SELECT 1 FROM project_members
-                WHERE project_id = ? AND user_id = ? AND join_status = 'Pending'
-            ");
-            $stmtCheck->execute([$project_id, $target_user_id]);
-
-            // Verify that the logged-in user matches the target user (they can only withdraw their own request)
-            if ($stmtCheck->fetch() && $target_user_id == $_SESSION['user_id']) {
-                // Remove the pending request
-                $stmtDelete = $pdo->prepare("DELETE FROM project_members WHERE project_id = ? AND user_id = ? AND join_status = 'Pending'");
-                $stmtDelete->execute([$project_id, $target_user_id]);
+            if ($target_user_id == (int)$_SESSION['user_id']) {
+                $status = project_member_get_status($pdo, $project_id, $target_user_id);
+                if ($status === 'Pending') {
+                    project_member_delete_by_status($pdo, $project_id, $target_user_id, 'Pending');
+                }
             }
         }
 

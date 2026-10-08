@@ -1,9 +1,10 @@
 <?php
-require 'dbs.php';
+require_once 'bootstrap.php';
 $message = '';
 $success = false;
 
-if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['username'], $_POST['password'])) {
+if (is_post() && isset($_POST['username'], $_POST['password'])) {
+     csrf_verify();
      $username = trim($_POST['username']);
      $password = $_POST['password'];
      if (!empty($username) && !empty($password)) {
@@ -37,6 +38,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['username'], $_POST['pa
             <?php endif; ?>
 
             <form method="POST">
+                <?php echo csrf_field(); ?>
                 <div class="mb-5">
                     <label class="auth-label">Username</label>
                     <input type="text" name="username" class="form-input" placeholder="Choose a username" required autofocus>

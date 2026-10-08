@@ -32,9 +32,9 @@
                         <h2 class="text-2xl font-head font-semibold">Phase Schedule</h2>
                         <p class="text-muted-ui text-sm mt-1">
                             <?php echo (int)$viewData['totalWeeks']; ?> phases &middot; one phase per week, derived from
-                            <?php echo htmlspecialchars(date('M j, Y', strtotime($viewData['classroomStartDate']))); ?>
+                            <?php echo e(date('M j, Y', strtotime($viewData['classroomStartDate']))); ?>
                             &ndash;
-                            <?php echo htmlspecialchars(date('M j, Y', strtotime($viewData['classroomEndDate']))); ?>.
+                            <?php echo e(date('M j, Y', strtotime($viewData['classroomEndDate']))); ?>.
                         </p>
                     </div>
 
@@ -55,18 +55,19 @@
                                 <div class="flex-1 min-w-[160px]">
                                     <?php if (!empty($viewData['isCoordinator'])): ?>
                                         <form method="POST" action="manage_phase.php" class="flex gap-2 items-center">
-                                            <input type="hidden" name="classroom_id" value="<?php echo htmlspecialchars($viewData['classroom_id']); ?>">
+                                            <?php echo csrf_field(); ?>
+                                            <input type="hidden" name="classroom_id" value="<?php echo e($viewData['classroom_id']); ?>">
                                             <input type="hidden" name="week_number" value="<?php echo (int)$p['week_number']; ?>">
                                             <input type="hidden" name="action" value="rename">
-                                            <input type="text" name="label" value="<?php echo htmlspecialchars($p['label']); ?>" maxlength="120" required
+                                            <input type="text" name="label" value="<?php echo e($p['label']); ?>" maxlength="120" required
                                                    class="bg-panel border border-ui rounded px-3 py-1.5 text-sm flex-1 focus:outline-none focus:border-accent transition">
                                             <button type="submit" class="btn-ui px-3 py-1.5 text-xs font-semibold" style="color: var(--accent); border-color: var(--accent);">Save</button>
                                         </form>
                                     <?php else: ?>
-                                        <span class="font-semibold text-sm"><?php echo htmlspecialchars($p['label']); ?></span>
+                                        <span class="font-semibold text-sm"><?php echo e($p['label']); ?></span>
                                     <?php endif; ?>
                                     <span class="block text-xs text-muted-ui font-mono-ui mt-1">
-                                        <?php echo htmlspecialchars(date('M j', strtotime($p['date_from'])) . ' – ' . date('M j', strtotime($p['date_to']))); ?>
+                                        <?php echo e(date('M j', strtotime($p['date_from'])) . ' – ' . date('M j', strtotime($p['date_to']))); ?>
                                     </span>
                                 </div>
 
@@ -77,7 +78,7 @@
 
                                     <?php if (!empty($p['merged_from'])): ?>
                                         <span class="badge badge-accent" title="Tasks and weekly logs from these phases roll up into this one">
-                                            + Week <?php echo htmlspecialchars(implode(', ', $p['merged_from'])); ?>
+                                            + Week <?php echo e(implode(', ', $p['merged_from'])); ?>
                                         </span>
                                     <?php endif; ?>
                                 </div>
@@ -87,14 +88,16 @@
                                     <?php if ($p['is_merged']): ?>
                                         <span class="badge badge-muted">Merged into Week <?php echo (int)$p['merged_into_week']; ?></span>
                                         <form method="POST" action="manage_phase.php" class="inline">
-                                            <input type="hidden" name="classroom_id" value="<?php echo htmlspecialchars($viewData['classroom_id']); ?>">
+                                            <?php echo csrf_field(); ?>
+                                            <input type="hidden" name="classroom_id" value="<?php echo e($viewData['classroom_id']); ?>">
                                             <input type="hidden" name="week_number" value="<?php echo (int)$p['week_number']; ?>">
                                             <input type="hidden" name="action" value="unmerge">
                                             <button type="submit" class="btn-ui px-3 py-1.5 text-xs font-semibold" style="color: var(--accent); border-color: var(--accent);">Unmerge</button>
                                         </form>
                                     <?php else: ?>
                                         <form method="POST" action="manage_phase.php" class="flex items-center gap-2">
-                                            <input type="hidden" name="classroom_id" value="<?php echo htmlspecialchars($viewData['classroom_id']); ?>">
+                                            <?php echo csrf_field(); ?>
+                                            <input type="hidden" name="classroom_id" value="<?php echo e($viewData['classroom_id']); ?>">
                                             <input type="hidden" name="week_number" value="<?php echo (int)$p['week_number']; ?>">
                                             <input type="hidden" name="action" value="merge">
                                             <select name="target_week" class="bg-panel border border-ui rounded px-2 py-1.5 text-xs focus:outline-none focus:border-accent transition">
@@ -108,7 +111,7 @@
                                                     if (!empty($target['merged_from'])) continue;
                                                     ?>
                                                     <option value="<?php echo (int)$target['week_number']; ?>">
-                                                        <?php echo htmlspecialchars($target['label']); ?>
+                                                        <?php echo e($target['label']); ?>
                                                     </option>
                                                 <?php endforeach; ?>
                                             </select>
@@ -128,7 +131,7 @@
             <div id="tab-groups" class="view-pane flex-1 flex flex-col">
                 <div class="flex justify-between items-end mb-4">
                     <div>
-                        <h2 class="text-2xl font-head font-semibold"><?php echo htmlspecialchars($viewData['classroomName'] ?? 'Classroom'); ?></h2>
+                        <h2 class="text-2xl font-head font-semibold"><?php echo e($viewData['classroomName'] ?? 'Classroom'); ?></h2>
                         <p class="text-muted-ui text-sm mt-1" id="ledger-stats"><?php echo $totalGroups; ?> groups &middot; <?php echo $nearlyFinishedGroups; ?> nearly finished</p>
                     </div>
                     <div class="flex gap-3">
@@ -169,7 +172,7 @@
                                     <?php if ($near): ?>
                                     <span class="seal flex-none"><i class="fas fa-check"></i></span>
                                     <?php endif; ?>
-                                    <span class="font-semibold truncate"><?php echo htmlspecialchars($g['name']); ?></span>
+                                    <span class="font-semibold truncate"><?php echo e($g['name']); ?></span>
                                     <?php if (!empty($g['open_issues'])): ?>
                                     <span class="badge badge-danger flex-none" title="Open blockers raised by this team"><i class="fas fa-triangle-exclamation me-1"></i><?php echo (int)$g['open_issues']; ?> blocker<?php echo $g['open_issues'] > 1 ? 's' : ''; ?></span>
                                     <?php endif; ?>
@@ -192,7 +195,7 @@
                                                 }
                                                 $wTitle = $ws['label'] . ($pPct === null ? ': no tasks yet' : ': ' . $pPct . '%');
                                             ?>
-                                                <div class="flex-1 h-2 rounded-sm" style="background: <?php echo $pColor; ?>; <?php echo !empty($ws['is_current']) ? 'outline: 1px solid var(--accent-2);' : ''; ?>" title="<?php echo htmlspecialchars($wTitle); ?>"></div>
+                                                <div class="flex-1 h-2 rounded-sm" style="background: <?php echo $pColor; ?>; <?php echo !empty($ws['is_current']) ? 'outline: 1px solid var(--accent-2);' : ''; ?>" title="<?php echo e($wTitle); ?>"></div>
                                             <?php endforeach; ?>
                                         </div>
                                         <span class="text-xs font-mono-ui text-muted-ui flex justify-between">
@@ -210,13 +213,13 @@
                             </div>
                             <div id="details-<?php echo $index; ?>" class="hidden px-14 py-4 bg-overlay-subtle border-b border-ui text-sm">
                                 <h4 class="font-semibold mb-1">Project Description</h4>
-                                <p class="text-muted-ui mb-3"><?php echo htmlspecialchars($g['desc'] ?? 'No description provided.'); ?></p>
+                                <p class="text-muted-ui mb-3"><?php echo e($g['desc'] ?? 'No description provided.'); ?></p>
                                 <div class="flex justify-between items-end">
                                     <div>
                                         <h4 class="font-semibold mb-1">Team Members</h4>
                                         <ul class="list-disc list-inside text-muted-ui mb-4">
                                             <?php foreach ($g['member_names'] ?? [] as $member): ?>
-                                                <li><?php echo htmlspecialchars($member); ?></li>
+                                                <li><?php echo e($member); ?></li>
                                             <?php endforeach; ?>
                                         </ul>
                                         
@@ -224,13 +227,14 @@
                                         <?php if (!empty($viewData['isCoordinator'])): ?>
                                         <div class="flex gap-2 items-center mb-4">
                                             <form method="POST" action="assign_mentor.php" class="flex gap-2 items-center">
+                                                <?php echo csrf_field(); ?>
                                                 <input type="hidden" name="project_id" value="<?php echo $g['id']; ?>">
-                                                <input type="hidden" name="classroom_id" value="<?php echo htmlspecialchars($viewData['classroom_id']); ?>">
+                                                <input type="hidden" name="classroom_id" value="<?php echo e($viewData['classroom_id']); ?>">
                                                 <select name="mentor_id" class="form-input text-xs py-1 px-2" style="width: auto;">
                                                     <option value="">-- No Mentor --</option>
                                                     <?php foreach ($viewData['availableMentors'] ?? [] as $mentor): ?>
                                                         <option value="<?php echo $mentor['id']; ?>" <?php echo ($g['mentor_id'] == $mentor['id']) ? 'selected' : ''; ?>>
-                                                            <?php echo htmlspecialchars($mentor['username']); ?>
+                                                            <?php echo e($mentor['username']); ?>
                                                         </option>
                                                     <?php endforeach; ?>
                                                 </select>
@@ -239,7 +243,7 @@
                                         </div>
                                         <?php else: ?>
                                         <p class="text-muted-ui text-sm mb-4">
-                                            <?php echo !empty($g['mentor_name']) ? htmlspecialchars($g['mentor_name']) : 'Unassigned'; ?>
+                                            <?php echo !empty($g['mentor_name']) ? e($g['mentor_name']) : 'Unassigned'; ?>
                                         </p>
                                         <?php endif; ?>
                                     </div>
@@ -259,8 +263,8 @@
             <div id="tab-roster" class="view-pane flex-1 flex flex-col hidden">
                 <div class="flex justify-between items-end mb-4">
                     <div>
-                        <h2 class="text-2xl font-head font-semibold"><?php echo htmlspecialchars($viewData['classroomName'] ?? 'Classroom'); ?></h2>
-                        <p class="text-muted-ui text-sm mt-1">Invite Code: <span class="font-mono-ui font-semibold px-2 py-1 bg-overlay-subtle rounded"><?php echo htmlspecialchars($viewData['inviteCode'] ?? 'XXXXXX'); ?></span></p>
+                        <h2 class="text-2xl font-head font-semibold"><?php echo e($viewData['classroomName'] ?? 'Classroom'); ?></h2>
+                        <p class="text-muted-ui text-sm mt-1">Invite Code: <span class="font-mono-ui font-semibold px-2 py-1 bg-overlay-subtle rounded"><?php echo e($viewData['inviteCode'] ?? 'XXXXXX'); ?></span></p>
                     </div>
                     
                     <button onclick="copyInviteCode()" class="btn-ui px-4 py-2 text-xs font-semibold hover-overlay-medium transition flex items-center gap-2" style="color: var(--accent); border-color: var(--accent);">
@@ -275,7 +279,8 @@
                     </div>
                     <?php if (!empty($viewData['isCoordinator'])): ?>
                     <form method="POST" action="add_mentor_to_classroom.php" class="flex gap-3 mb-6">
-                        <input type="hidden" name="classroom_id" value="<?php echo htmlspecialchars($viewData['classroom_id']); ?>">
+                        <?php echo csrf_field(); ?>
+                        <input type="hidden" name="classroom_id" value="<?php echo e($viewData['classroom_id']); ?>">
                         <input type="text" name="mentor_username" class="form-input flex-1" placeholder="Enter faculty username to invite as Mentor..." required>
                         <button type="submit" class="btn-ui px-4 py-2 font-semibold hover:opacity-90 transition" style="background: var(--accent-2); color: var(--bg);">
                             Add Mentor
@@ -290,7 +295,7 @@
                                     <?php echo strtoupper(substr($mentor['username'], 0, 1)); ?>
                                 </div>
                                 <div>
-                                    <div class="font-semibold text-sm"><?php echo htmlspecialchars($mentor['username']); ?></div>
+                                    <div class="font-semibold text-sm"><?php echo e($mentor['username']); ?></div>
                                     <div class="text-xs text-muted-ui font-mono-ui uppercase tracking-wider">Admin / Mentor</div>
                                 </div>
                             </div>
@@ -319,12 +324,12 @@
                                         <?php echo strtoupper(substr($student['username'], 0, 1)); ?>
                                     </div>
                                     <div>
-                                        <div class="font-semibold text-sm"><?php echo htmlspecialchars($student['username']); ?></div>
-                                        <div class="text-xs text-muted-ui font-mono-ui tracking-wide"><?php echo htmlspecialchars($student['usn'] ?? 'No USN'); ?></div>
+                                        <div class="font-semibold text-sm"><?php echo e($student['username']); ?></div>
+                                        <div class="text-xs text-muted-ui font-mono-ui tracking-wide"><?php echo e($student['usn'] ?? 'No USN'); ?></div>
                                     </div>
                                     <div>
                                         <?php if ($student['project_name']): ?>
-                                            <span class="badge badge-green text-[10px] uppercase tracking-wider">In <?php echo htmlspecialchars($student['project_name']); ?></span>
+                                            <span class="badge badge-green text-[10px] uppercase tracking-wider">In <?php echo e($student['project_name']); ?></span>
                                         <?php else: ?>
                                             <span class="px-2 py-1 text-[10px] font-semibold rounded uppercase tracking-wider bg-overlay-medium text-muted-ui">Unassigned</span>
                                         <?php endif; ?>
@@ -342,7 +347,7 @@
 
         <script>
             function copyInviteCode() {
-                const code = "<?php echo htmlspecialchars($viewData['inviteCode'] ?? 'XXXXXX'); ?>";
+                const code = "<?php echo e($viewData['inviteCode'] ?? 'XXXXXX'); ?>";
                 const onCopied = () => showToast(`Share code ${code} with students to join.`, 'Code Copied');
 
                 if (navigator.clipboard && window.isSecureContext) {
