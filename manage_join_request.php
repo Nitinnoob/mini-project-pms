@@ -19,13 +19,15 @@ if (is_post()) {
             // Validate that the currently logged in user is actually the leader of this project AND project is in this classroom
             if (is_project_leader($pdo, $project_id, $_SESSION['user_id'], $classroom_id)) {
                 if ($action === 'accept') {
-                    // Fetch the classroom's configured max team size
+                    // Fetch the classroom's configured max team size (hard-capped at 4)
                     $maxSize = project_get_classroom_max_team_size($pdo, $project_id);
+                    if ($maxSize > 4) { $maxSize = 4; }
+                    if ($maxSize < 1) { $maxSize = 1; }
 
                     // Check if the project already has max active members
                     $count = project_member_active_count($pdo, $project_id);
 
-                    if ($count < $maxSize) {
+                    if ($count < $maxSize && $count < 4) {
                         if (project_member_update_status($pdo, $project_id, $target_user_id, 'Pending', 'Active')) {
                             notify_user($pdo, $target_user_id, 'join_accepted',
                                 'Your request to join ' . notify_project_name($pdo, $project_id) . ' was accepted.',

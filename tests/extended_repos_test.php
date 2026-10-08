@@ -1,36 +1,5 @@
 <?php
-// Tests for issue, deliverable, membership, and weekly log repositories.
-
-test('issue repo: create, find, resolve', function () {
-    $pdo = test_pdo();
-    $id = issue_create($pdo, [
-        'project_id'  => 10,
-        'raised_by'   => 4,
-        'title'       => 'Blocked by API',
-        'description' => 'API server down',
-        'severity'    => 'high'
-    ]);
-    assert_true($id > 0);
-
-    $found = issue_find_with_classroom($pdo, $id, 1);
-    assert_same('Blocked by API', $found['title']);
-    assert_same('open', $found['status']);
-
-    assert_same(null, issue_find_with_classroom($pdo, $id, 2), 'wrong classroom isolates issue');
-
-    assert_true(issue_resolve($pdo, $id, 3));
-    $updated = issue_find_with_classroom($pdo, $id, 1);
-    assert_same('resolved', $updated['status']);
-});
-
-test('deliverable repo: create file record', function () {
-    $pdo = test_pdo();
-    $id = deliverable_create($pdo, 10, null, 4, 'report.pdf', 'uploads/report.pdf');
-    assert_true($id > 0);
-
-    $count = (int)$pdo->query("SELECT COUNT(*) FROM deliverables WHERE project_id = 10")->fetchColumn();
-    assert_same(1, $count);
-});
+// Tests for membership and weekly log repositories.
 
 test('membership repo: status, capacity, and join requests', function () {
     $pdo = test_pdo();

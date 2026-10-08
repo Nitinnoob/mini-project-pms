@@ -13,12 +13,8 @@
         join_declined: 'fa-circle-xmark',
         invite: 'fa-envelope',
         invite_response: 'fa-envelope-open',
-        task_assigned: 'fa-list-check',
-        task_updated: 'fa-exchange-alt',
         weekly_log: 'fa-file-lines',
-        review: 'fa-clipboard-check',
-        issue_raised: 'fa-triangle-exclamation',
-        issue_resolved: 'fa-circle-check'
+        review: 'fa-clipboard-check'
     };
 
     function timeAgo(s) {

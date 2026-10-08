@@ -109,3 +109,52 @@ function classroom_role(PDO $pdo, $classroomId, $userId): ?string
     $role = $stmt->fetchColumn();
     return $role === false ? null : $role;
 }
+
+/**
+ * May $userId mark or modify attendance for $projectId?
+ * Authorized if user is the assigned mentor of the project or an Admin in the project's classroom.
+ */
+function can_manage_project_attendance(PDO $pdo, int $projectId, int $userId): bool
+{
+    if ($projectId <= 0 || $userId <= 0) {
+        return false;
+    }
+    $stmt = $pdo->prepare("SELECT classroom_id, mentor_id FROM projects WHERE id = ?");
+    $stmt->execute([$projectId]);
+    $row = $stmt->fetch(PDO::FETCH_ASSOC);
+    if (!$row) {
+        return false;
+    }
+    if ($row['mentor_id'] !== null && (int)$row['mentor_id'] === $userId) {
+        return true;
+    }
+    return classroom_role($pdo, (int)$row['classroom_id'], $userId) === 'Admin';
+}
+
+/**
+ * May $userId evaluate and enter marks for $projectId?
+ * Authorized if user is the assigned mentor of the project or an Admin in the project's classroom.
+ */
+function can_evaluate_project(PDO $pdo, int $projectId, int $userId): bool
+{
+    return can_manage_project_attendance($pdo, $projectId, $userId);
+}
+
+/**
+ * May $userId edit or unlock marks after they have been finalized?
+ * Once finalized, subsequent updates are restricted strictly to classroom Admins.
+ */
+function can_override_finalized_marks(PDO $pdo, int $projectId, int $userId): bool
+{
+    if ($projectId <= 0 || $userId <= 0) {
+        return false;
+    }
+    $stmt = $pdo->prepare("SELECT classroom_id FROM projects WHERE id = ?");
+    $stmt->execute([$projectId]);
+    $classroomId = $stmt->fetchColumn();
+    if (!$classroomId) {
+        return false;
+    }
+    return classroom_role($pdo, (int)$classroomId, $userId) === 'Admin';
+}
+

@@ -23,7 +23,8 @@ if (!function_exists('classroom_get_min_team_size')) {
         $stmt = $pdo->prepare("SELECT c.min_team_size FROM classrooms c JOIN projects p ON p.classroom_id = c.id WHERE p.id = ?");
         $stmt->execute([$projectId]);
         $res = $stmt->fetch(PDO::FETCH_ASSOC);
-        return !empty($res['min_team_size']) ? (int)$res['min_team_size'] : 1;
+        $size = !empty($res['min_team_size']) ? (int)$res['min_team_size'] : 1;
+        return max(1, min(4, $size));
     }
 }
 

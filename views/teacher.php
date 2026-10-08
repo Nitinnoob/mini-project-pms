@@ -3,17 +3,183 @@
         <!-- ============================================================ -->
         <?php
         $totalGroups = count($viewData['projectGroups'] ?? []);
-        $nearlyFinishedGroups = count(array_filter($viewData['projectGroups'] ?? [], function($g) {
-            return ($g['percent'] ?? 0) >= 90;
-        }));
         ?>
         <div class="col-span-4 flex flex-col h-full">
             
             <!-- Teacher Tabs -->
-            <div class="flex gap-6 border-b border-ui mb-6">
+            <div class="flex gap-6 border-b border-ui mb-6 flex-wrap">
                 <button id="btn-tab-groups" class="tab-btn active pb-2" onclick="switchTeacherTab('groups')">Project Groups</button>
                 <button id="btn-tab-roster" class="tab-btn pb-2" onclick="switchTeacherTab('roster')">Classroom</button>
+                <button id="btn-tab-marks" class="tab-btn pb-2" onclick="switchTeacherTab('marks')">Evaluation Marks</button>
+                <button id="btn-tab-milestones" class="tab-btn pb-2" onclick="switchTeacherTab('milestones')">Milestones</button>
                 <button id="btn-tab-phases" class="tab-btn pb-2" onclick="switchTeacherTab('phases')">Phases</button>
+            </div>
+
+            <!-- TAB: Evaluation Marks (CIE & Viva Marks Sheet) -->
+            <div id="tab-marks" class="view-pane flex-1 flex flex-col hidden">
+                <div class="flex justify-between items-end mb-4 flex-wrap gap-3">
+                    <div>
+                        <h2 class="text-2xl font-head font-semibold">Continuous Evaluation Marks</h2>
+                        <p class="text-muted-ui text-sm mt-1">
+                            50 Report / 25 Presentation / 25 Q&A (100 Total) &middot; Guide evaluations & finalization desk
+                        </p>
+                    </div>
+                    <div class="flex gap-3">
+                        <a href="export_marks.php?classroom_id=<?php echo urlencode((string)$viewData['classroom_id']); ?>&format=print" target="_blank" class="btn-ui px-3.5 py-1.5 text-xs font-semibold hover-overlay-medium transition flex items-center gap-1.5" style="color: var(--accent); border-color: var(--accent);">
+                            <i class="fas fa-print"></i> Print Official Sheet
+                        </a>
+                        <a href="export_marks.php?classroom_id=<?php echo urlencode((string)$viewData['classroom_id']); ?>&format=csv" class="btn-ui px-3.5 py-1.5 text-xs font-semibold hover-overlay-medium transition flex items-center gap-1.5" style="background: var(--accent); color: var(--bg);">
+                            <i class="fas fa-download"></i> Export CSV
+                        </a>
+                    </div>
+                </div>
+
+                <div class="card flex-1 flex flex-col overflow-hidden">
+                    <div class="grid grid-cols-[1.5fr_130px_100px_100px_110px_auto] gap-3 px-5 py-3 text-xs text-muted-ui font-mono-ui border-b border-ui items-center">
+                        <span>Project Group</span>
+                        <span>Guide</span>
+                        <span class="text-center">Report (/50)</span>
+                        <span class="text-center">Attendance</span>
+                        <span class="text-center">Evaluation</span>
+                        <span class="text-right">Action</span>
+                    </div>
+                    <div class="flex-1 overflow-y-auto divide-y divide-ui">
+                        <?php if (empty($viewData['projectGroups'])): ?>
+                            <div class="py-12 text-center text-muted-ui text-sm">
+                                <i class="fas fa-clipboard-check text-2xl text-muted-ui/50 mb-2"></i>
+                                <p class="font-medium">No project groups created yet.</p>
+                            </div>
+                        <?php else: ?>
+                            <?php foreach ($viewData['projectGroups'] as $pg): ?>
+                                <?php
+                                $m = $pg['marks'] ?? ['report_marks' => null, 'is_finalized' => false];
+                                $h = $pg['health'] ?? ['attendance_pct' => 100.0];
+                                $isFin = !empty($m['is_finalized']);
+                                ?>
+                                <div class="grid grid-cols-[1.5fr_130px_100px_100px_110px_auto] gap-3 px-5 py-3.5 items-center hover-overlay-subtle transition">
+                                    <div class="min-w-0">
+                                        <span class="font-semibold text-sm text-white block truncate"><?php echo e($pg['name']); ?></span>
+                                        <span class="text-xs text-muted-ui font-mono-ui"><?php echo count($pg['member_names'] ?? []); ?> member(s)</span>
+                                    </div>
+                                    <div class="text-xs text-muted-ui truncate">
+                                        <?php echo !empty($pg['mentor_name']) ? e($pg['mentor_name']) : '<span class="italic">Unassigned</span>'; ?>
+                                    </div>
+                                    <div class="text-center font-mono-ui text-xs font-semibold">
+                                        <?php echo $m['report_marks'] !== null ? number_format((float)$m['report_marks'], 1) . ' / 50' : '<span class="text-muted-ui font-normal">-</span>'; ?>
+                                    </div>
+                                    <div class="text-center font-mono-ui text-xs">
+                                        <span class="<?php echo ($h['attendance_pct'] < 75.0) ? 'text-amber-400 font-bold' : ''; ?>">
+                                            <?php echo $h['attendance_pct']; ?>%
+                                        </span>
+                                    </div>
+                                    <div class="text-center">
+                                        <?php if ($isFin): ?>
+                                            <span class="badge badge-green font-mono-ui text-[11px] inline-flex items-center gap-1">
+                                                <i class="fas fa-lock"></i> Finalized
+                                            </span>
+                                        <?php else: ?>
+                                            <span class="badge badge-muted font-mono-ui text-[11px]">
+                                                Draft
+                                            </span>
+                                        <?php endif; ?>
+                                    </div>
+                                    <div class="text-right">
+                                        <a href="dashboard.php?project_id=<?php echo $pg['id']; ?>&classroom_id=<?php echo urlencode($viewData['classroom_id']); ?>" class="btn-ui px-3 py-1 text-xs font-semibold" style="color: var(--accent); border-color: var(--accent);">
+                                            Audit & Marks &rarr;
+                                        </a>
+                                    </div>
+                                </div>
+                            <?php endforeach; ?>
+                        <?php endif; ?>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB 4: Classroom Milestones (Coordinator-defined timeline targets with countdowns) -->
+            <div id="tab-milestones" class="view-pane flex-1 flex flex-col hidden">
+                <div class="mb-4 flex justify-between items-start">
+                    <div>
+                        <h2 class="text-2xl font-head font-semibold">Classroom Milestones</h2>
+                        <p class="text-muted-ui text-sm mt-1">
+                            Key academic timeline targets, submission deadlines, and viva dates with live countdown timers.
+                        </p>
+                    </div>
+                </div>
+
+                <?php if (!empty($viewData['isCoordinator'])): ?>
+                <!-- Add Milestone Form (Coordinator Only) -->
+                <div class="card p-5 mb-6 border-ui">
+                    <h3 class="font-head font-semibold text-sm mb-3 flex items-center gap-2">
+                        <i class="fas fa-plus-circle text-accent"></i> Create New Milestone
+                    </h3>
+                    <form method="POST" action="manage_milestone.php" class="grid grid-cols-1 md:grid-cols-[1fr_200px_auto] gap-3 items-end">
+                        <?php echo csrf_field(); ?>
+                        <input type="hidden" name="classroom_id" value="<?php echo e($viewData['classroom_id']); ?>">
+                        <input type="hidden" name="action" value="add">
+                        <div>
+                            <label class="block text-xs font-semibold text-muted-ui mb-1">Milestone Title</label>
+                            <input type="text" name="title" maxlength="255" placeholder="e.g. Synopsis Approval, Mid-Term Viva, Final Report" required
+                                   class="form-input text-sm w-full">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-muted-ui mb-1">Due Date</label>
+                            <input type="date" name="due_date" required class="form-input text-sm w-full">
+                        </div>
+                        <button type="submit" class="btn-ui px-4 py-2 text-xs font-semibold" style="background: var(--accent); color: var(--bg);">
+                            <i class="fas fa-plus mr-1"></i> Add Milestone
+                        </button>
+                    </form>
+                </div>
+                <?php endif; ?>
+
+                <!-- Milestones Table / List -->
+                <div class="card flex-1 flex flex-col p-4">
+                    <h3 class="font-head font-semibold text-sm mb-3">Timeline Targets</h3>
+                    <?php if (empty($viewData['classroomMilestones'])): ?>
+                        <div class="py-12 text-center text-muted-ui text-sm">
+                            <i class="fas fa-flag text-2xl text-muted-ui/50 mb-2"></i>
+                            <p class="font-medium">No milestones created yet.</p>
+                            <p class="text-xs text-muted-ui mt-1">Set academic milestones to track student progress towards submission dates.</p>
+                        </div>
+                    <?php else: ?>
+                        <div class="space-y-3 overflow-y-auto">
+                            <?php foreach ($viewData['classroomMilestones'] as $m): ?>
+                                <?php
+                                $badgeTone = $m['badge_class'] ?? 'badge-muted';
+                                ?>
+                                <div class="flex items-center justify-between p-3.5 bg-raised border border-ui rounded gap-4 flex-wrap">
+                                    <div class="flex-1 min-w-[200px]">
+                                        <div class="font-semibold text-sm flex items-center gap-2">
+                                            <i class="fas fa-flag text-xs" style="color: var(--accent);"></i>
+                                            <span><?php echo e($m['title']); ?></span>
+                                        </div>
+                                        <span class="block text-xs text-muted-ui font-mono-ui mt-1">
+                                            Target: <?php echo e($m['formatted_due_date']); ?>
+                                        </span>
+                                    </div>
+
+                                    <div class="flex items-center gap-3">
+                                        <span class="badge <?php echo $badgeTone; ?> font-mono-ui text-xs">
+                                            <?php echo e($m['countdown_label']); ?>
+                                        </span>
+
+                                        <?php if (!empty($viewData['isCoordinator'])): ?>
+                                        <form method="POST" action="manage_milestone.php" onsubmit="return confirm('Remove this milestone?');" class="inline">
+                                            <?php echo csrf_field(); ?>
+                                            <input type="hidden" name="classroom_id" value="<?php echo e($viewData['classroom_id']); ?>">
+                                            <input type="hidden" name="milestone_id" value="<?php echo (int)$m['id']; ?>">
+                                            <input type="hidden" name="action" value="delete">
+                                            <button type="submit" class="btn-ui px-2.5 py-1 text-xs text-rose-400 border-rose-500/30 hover:border-rose-500 hover:text-rose-300" title="Delete Milestone">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </form>
+                                        <?php endif; ?>
+                                    </div>
+                                </div>
+                            <?php endforeach; ?>
+                        </div>
+                    <?php endif; ?>
+                </div>
             </div>
 
             <!-- TAB 3: Phase Schedule (1 phase = 1 week; rename/merge) -->
@@ -77,7 +243,7 @@
                                     <?php endif; ?>
 
                                     <?php if (!empty($p['merged_from'])): ?>
-                                        <span class="badge badge-accent" title="Tasks and weekly logs from these phases roll up into this one">
+                                        <span class="badge badge-accent" title="Weekly logs from these phases roll up into this one">
                                             + Week <?php echo e(implode(', ', $p['merged_from'])); ?>
                                         </span>
                                     <?php endif; ?>
@@ -132,23 +298,28 @@
                 <div class="flex justify-between items-end mb-4">
                     <div>
                         <h2 class="text-2xl font-head font-semibold"><?php echo e($viewData['classroomName'] ?? 'Classroom'); ?></h2>
-                        <p class="text-muted-ui text-sm mt-1" id="ledger-stats"><?php echo $totalGroups; ?> groups &middot; <?php echo $nearlyFinishedGroups; ?> nearly finished</p>
+                        <p class="text-muted-ui text-sm mt-1" id="ledger-stats"><?php echo $totalGroups; ?> groups</p>
                     </div>
                     <div class="flex gap-3">
-                        
                         <button onclick="copyInviteCode()" class="btn-ui px-4 py-1.5 text-xs font-semibold hover-overlay-medium transition flex items-center gap-2" style="color: var(--accent); border-color: var(--accent);">
                             <i class="fas fa-copy"></i> Copy Invite Code
-                        </button>
-                        
-                        <button id="sortLedgerBtn" class="ledger-head-btn text-sm font-semibold pb-0.5">
-                            Sort by completion <i class="fas fa-arrow-down-short-wide ms-1 text-xs"></i>
                         </button>
                     </div>
                 </div>
 
+                <div class="mb-4">
+                    <?php require __DIR__ . '/partials/milestone_widget.php'; ?>
+                </div>
+
                 <div class="card flex-1 flex flex-col">
-                    <div class="grid grid-cols-[1fr_auto_auto_auto] gap-4 px-5 py-3 text-xs text-muted-ui font-mono-ui border-b border-ui">
-                        <span>Group</span><span class="w-20 text-right">Members</span><span class="w-40">Completion</span><span class="w-16 text-right">Status</span>
+                    <div class="grid grid-cols-[1.5fr_130px_100px_90px_85px_70px_auto] gap-3 px-5 py-3 text-xs text-muted-ui font-mono-ui border-b border-ui items-center">
+                        <span>Project Group</span>
+                        <span>Health</span>
+                        <span class="text-center">Meetings</span>
+                        <span class="text-center">Attendance</span>
+                        <span class="text-center">Directives</span>
+                        <span class="text-right">Team</span>
+                        <span class="text-right">Audit</span>
                     </div>
                     <div id="ledger-body" class="flex-1">
                         <?php if (empty($viewData['projectGroups'])): ?>
@@ -160,73 +331,125 @@
                             <p class="text-sm text-muted-ui">Once students form teams, their projects will appear here.</p>
                         </div>
                         <?php endif; ?>
-                        <?php foreach ($viewData['projectGroups'] as $index => $g):
-                            $near = $g['percent'] >= 90;
-                            $ink = $g['percent'] < 50 ? 'var(--status-red)' : ($near ? 'var(--status-green)' : 'var(--status-amber)');
-                            $statusWord = $g['percent'] < 50 ? 'At risk' : ($near ? 'Nearly done' : 'On track');
-                            $statusColor = $ink;
+                        <?php foreach ($viewData['projectGroups'] as $index => $g): ?>
+                        <?php
+                        $h = $g['health'] ?? [
+                            'status'               => 'neutral',
+                            'label'                => 'Pending',
+                            'badge_class'          => 'badge-muted',
+                            'dot_color'            => 'bg-muted-ui',
+                            'meetings_held'        => 0,
+                            'meetings_total'       => 0,
+                            'meetings_past_unheld' => 0,
+                            'attendance_pct'       => 100.0,
+                            'open_instructions'    => 0,
+                            'reasons'              => ['Pending'],
+                        ];
                         ?>
-                        <div class="ledger-item flex flex-col" data-percent="<?php echo $g['percent']; ?>">
-                            <div class="ledger-row grid grid-cols-[1fr_auto_auto_auto] gap-4 px-5 py-4 items-center cursor-pointer hover-overlay-subtle transition" onclick="document.getElementById('details-<?php echo $index; ?>').classList.toggle('hidden'); document.getElementById('chevron-<?php echo $index; ?>').classList.toggle('rotate-180')">
-                                <div class="flex items-center gap-3 min-w-0">
-                                    <?php if ($near): ?>
-                                    <span class="seal flex-none"><i class="fas fa-check"></i></span>
-                                    <?php endif; ?>
-                                    <span class="font-semibold truncate"><?php echo e($g['name']); ?></span>
-                                    <?php if (!empty($g['open_issues'])): ?>
-                                    <span class="badge badge-danger flex-none" title="Open blockers raised by this team"><i class="fas fa-triangle-exclamation me-1"></i><?php echo (int)$g['open_issues']; ?> blocker<?php echo $g['open_issues'] > 1 ? 's' : ''; ?></span>
-                                    <?php endif; ?>
-                                    <i class="fas fa-chevron-down text-xs text-muted-ui ml-2 transition-transform duration-200" id="chevron-<?php echo $index; ?>"></i>
-                                </div>
-                                <span class="w-20 text-right text-sm text-muted-ui"><?php echo (int)$g['members']; ?></span>
-                                <div class="w-40">
-                                    <?php if (!empty($g['phase_stats']) && !empty($g['has_schedule'])): ?>
-                                        <div class="flex gap-1 mb-1">
-                                            <?php foreach ($g['phase_stats'] as $ws):
-                                                $pPct = $ws['percent']; // null = no tasks scheduled yet
-                                                if ($pPct === null) {
-                                                    $pColor = 'var(--border)';
-                                                } elseif ($pPct === 100) {
-                                                    $pColor = 'var(--accent)';
-                                                } elseif ($pPct > 0) {
-                                                    $pColor = 'var(--accent-2)';
-                                                } else {
-                                                    $pColor = 'var(--border)';
-                                                }
-                                                $wTitle = $ws['label'] . ($pPct === null ? ': no tasks yet' : ': ' . $pPct . '%');
-                                            ?>
-                                                <div class="flex-1 h-2 rounded-sm" style="background: <?php echo $pColor; ?>; <?php echo !empty($ws['is_current']) ? 'outline: 1px solid var(--accent-2);' : ''; ?>" title="<?php echo e($wTitle); ?>"></div>
-                                            <?php endforeach; ?>
-                                        </div>
-                                        <span class="text-xs font-mono-ui text-muted-ui flex justify-between">
-                                            <span><?php echo (int)$g['percent']; ?>% overall</span>
-                                            <span><?php echo count($g['phase_stats']); ?> phases</span>
+                        <div class="ledger-item flex flex-col border-b border-ui last:border-b-0">
+                            <div class="ledger-row grid grid-cols-[1.5fr_130px_100px_90px_85px_70px_auto] gap-3 px-5 py-3.5 items-center cursor-pointer hover-overlay-subtle transition" onclick="document.getElementById('details-<?php echo $index; ?>').classList.toggle('hidden'); document.getElementById('chevron-<?php echo $index; ?>').classList.toggle('rotate-180')">
+                                <div class="flex items-center gap-2.5 min-w-0">
+                                    <i class="fas fa-chevron-down text-xs text-muted-ui flex-none transition-transform duration-200" id="chevron-<?php echo $index; ?>"></i>
+                                    <div class="min-w-0">
+                                        <span class="font-semibold text-sm truncate block"><?php echo e($g['name']); ?></span>
+                                        <span class="text-[11px] text-muted-ui truncate block">
+                                            Guide: <?php echo !empty($g['mentor_name']) ? e($g['mentor_name']) : '<span class="italic">Unassigned</span>'; ?>
                                         </span>
-                                    <?php else: ?>
-                                        <div class="ink-bar-track w-full mb-1">
-                                            <div class="ink-bar-fill" style="width: <?php echo (int)$g['percent']; ?>%; background: <?php echo $ink; ?>;"></div>
-                                        </div>
-                                        <span class="text-xs font-mono-ui text-muted-ui"><?php echo (int)$g['percent']; ?>%</span>
+                                    </div>
+                                </div>
+
+                                <!-- Health Status Badge -->
+                                <div>
+                                    <span class="badge <?php echo $h['badge_class']; ?> text-xs font-mono-ui inline-flex items-center gap-1.5 px-2.5 py-0.5">
+                                        <span class="w-2 h-2 rounded-full <?php echo $h['dot_color']; ?>"></span>
+                                        <span><?php echo e($h['label']); ?></span>
+                                    </span>
+                                </div>
+
+                                <!-- Meetings Progress -->
+                                <div class="text-center font-mono-ui text-xs">
+                                    <span class="font-semibold"><?php echo (int)$h['meetings_held']; ?></span><span class="text-muted-ui">/<?php echo (int)$h['meetings_total']; ?></span>
+                                    <?php if ($h['meetings_past_unheld'] > 0): ?>
+                                        <span class="block text-[10px] text-rose-400 font-semibold"><?php echo (int)$h['meetings_past_unheld']; ?> missed</span>
                                     <?php endif; ?>
                                 </div>
-                                <span class="w-16 text-right text-sm font-semibold" style="color: <?php echo $statusColor; ?>;"><?php echo $statusWord; ?></span>
+
+                                <!-- Attendance Percentage -->
+                                <div class="text-center font-mono-ui text-xs">
+                                    <span class="font-semibold <?php echo ($h['attendance_pct'] < 75.0) ? 'text-amber-400' : ''; ?>">
+                                        <?php echo $h['attendance_pct']; ?>%
+                                    </span>
+                                    <?php if ($h['attendance_pct'] < 75.0): ?>
+                                        <span class="block text-[10px] text-amber-400 font-semibold">Shortage</span>
+                                    <?php endif; ?>
+                                </div>
+
+                                <!-- Directives / Instructions -->
+                                <div class="text-center font-mono-ui text-xs">
+                                    <?php if ($h['open_instructions'] > 0): ?>
+                                        <span class="badge badge-warning text-[10px] px-1.5 py-0.5"><?php echo (int)$h['open_instructions']; ?> open</span>
+                                    <?php else: ?>
+                                        <span class="text-emerald-400 text-xs"><i class="fas fa-check"></i> 0 open</span>
+                                    <?php endif; ?>
+                                </div>
+
+                                <!-- Team Count (Max 4) -->
+                                <div class="text-right text-xs font-mono-ui text-muted-ui">
+                                    <?php echo (int)$g['members']; ?> / 4
+                                </div>
+
+                                <!-- Action Arrow -->
+                                <div class="text-right">
+                                    <a href="dashboard.php?project_id=<?php echo $g['id']; ?>&classroom_id=<?php echo urlencode($viewData['classroom_id']); ?>" onclick="event.stopPropagation();" class="btn-ui px-2.5 py-1 text-xs text-accent hover:opacity-80 transition" title="Audit & Drilldown">
+                                        <i class="fas fa-arrow-right"></i>
+                                    </a>
+                                </div>
                             </div>
-                            <div id="details-<?php echo $index; ?>" class="hidden px-14 py-4 bg-overlay-subtle border-b border-ui text-sm">
-                                <h4 class="font-semibold mb-1">Project Description</h4>
-                                <p class="text-muted-ui mb-3"><?php echo e($g['desc'] ?? 'No description provided.'); ?></p>
-                                <div class="flex justify-between items-end">
-                                    <div>
-                                        <h4 class="font-semibold mb-1">Team Members</h4>
-                                        <ul class="list-disc list-inside text-muted-ui mb-4">
-                                            <?php foreach ($g['member_names'] ?? [] as $member): ?>
-                                                <li><?php echo e($member); ?></li>
+
+                            <!-- Expanded Details & Health Diagnosis -->
+                            <div id="details-<?php echo $index; ?>" class="hidden px-8 py-4 bg-overlay-subtle border-t border-ui text-sm">
+                                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                                    <!-- Health Diagnosis -->
+                                    <div class="p-3 rounded border <?php echo ($h['status'] === 'critical') ? 'border-red-500/30 bg-red-950/20' : (($h['status'] === 'warning') ? 'border-amber-500/30 bg-amber-950/20' : 'border-emerald-500/30 bg-emerald-950/10'); ?>">
+                                        <div class="flex items-center gap-2 mb-2">
+                                            <span class="w-2.5 h-2.5 rounded-full <?php echo $h['dot_color']; ?>"></span>
+                                            <span class="font-head font-semibold text-xs uppercase tracking-wider">Health Status: <?php echo e($h['label']); ?></span>
+                                        </div>
+                                        <ul class="text-xs space-y-1 text-muted-ui">
+                                            <?php foreach ($h['reasons'] as $r): ?>
+                                                <li class="flex items-start gap-1.5">
+                                                    <span class="text-muted-ui">&bull;</span>
+                                                    <span><?php echo e($r); ?></span>
+                                                </li>
                                             <?php endforeach; ?>
                                         </ul>
-                                        
-                                        <h4 class="font-semibold mb-1">Assigned Mentor</h4>
-                                        <?php if (!empty($viewData['isCoordinator'])): ?>
-                                        <div class="flex gap-2 items-center mb-4">
-                                            <form method="POST" action="assign_mentor.php" class="flex gap-2 items-center">
+                                        <div class="mt-3 pt-2 border-t border-ui/40 text-[11px] font-mono-ui text-muted-ui flex justify-between">
+                                            <span>Held: <?php echo (int)$h['meetings_held']; ?>/<?php echo (int)$h['meetings_total']; ?></span>
+                                            <span>Att: <?php echo $h['attendance_pct']; ?>%</span>
+                                            <span>Open: <?php echo (int)$h['open_instructions']; ?></span>
+                                        </div>
+                                    </div>
+
+                                    <!-- Description & Team -->
+                                    <div class="flex flex-col justify-between">
+                                        <div>
+                                            <h4 class="font-semibold text-xs uppercase tracking-wider text-muted-ui mb-1">Project Description</h4>
+                                            <p class="text-xs text-muted-ui mb-3"><?php echo e($g['desc'] ?? 'No description provided.'); ?></p>
+                                            <h4 class="font-semibold text-xs uppercase tracking-wider text-muted-ui mb-1">Team Members</h4>
+                                            <ul class="list-disc list-inside text-xs text-muted-ui">
+                                                <?php foreach ($g['member_names'] ?? [] as $member): ?>
+                                                    <li><?php echo e($member); ?></li>
+                                                <?php endforeach; ?>
+                                            </ul>
+                                        </div>
+                                    </div>
+
+                                    <!-- Guide & Drilldown Link -->
+                                    <div class="flex flex-col justify-between items-start md:items-end">
+                                        <div class="w-full md:text-right">
+                                            <h4 class="font-semibold text-xs uppercase tracking-wider text-muted-ui mb-1">Assigned Guide</h4>
+                                            <?php if (!empty($viewData['isCoordinator'])): ?>
+                                            <form method="POST" action="assign_mentor.php" class="flex gap-2 items-center justify-start md:justify-end mb-3">
                                                 <?php echo csrf_field(); ?>
                                                 <input type="hidden" name="project_id" value="<?php echo $g['id']; ?>">
                                                 <input type="hidden" name="classroom_id" value="<?php echo e($viewData['classroom_id']); ?>">
@@ -240,17 +463,26 @@
                                                 </select>
                                                 <button type="submit" class="btn-ui px-3 py-1 text-xs hover-overlay-medium transition" style="color: var(--accent); border-color: var(--accent);">Assign</button>
                                             </form>
+                                            <?php else: ?>
+                                            <p class="text-muted-ui text-xs mb-3">
+                                                <?php echo !empty($g['mentor_name']) ? e($g['mentor_name']) : 'Unassigned'; ?>
+                                            </p>
+                                            <?php endif; ?>
                                         </div>
-                                        <?php else: ?>
-                                        <p class="text-muted-ui text-sm mb-4">
-                                            <?php echo !empty($g['mentor_name']) ? e($g['mentor_name']) : 'Unassigned'; ?>
-                                        </p>
-                                        <?php endif; ?>
+
+                                        <div class="mt-2 text-right">
+                                            <span class="text-[11px] font-mono-ui text-muted-ui block mb-2">
+                                                Evaluation: <?php echo !empty($g['marks']['is_finalized']) ? '<span class="text-emerald-400 font-semibold"><i class="fas fa-lock"></i> Finalized</span>' : '<span class="text-muted-ui">Draft</span>'; ?>
+                                                <?php if ($g['marks']['report_marks'] !== null): ?>
+                                                    &middot; Report: <strong><?php echo (float)$g['marks']['report_marks']; ?>/50</strong>
+                                                <?php endif; ?>
+                                            </span>
+                                        </div>
+
+                                        <a href="dashboard.php?project_id=<?php echo $g['id']; ?>&classroom_id=<?php echo urlencode($viewData['classroom_id']); ?>" class="btn-ui px-4 py-2 text-xs font-semibold hover-overlay-medium transition flex items-center gap-2" style="color: var(--accent); border-color: var(--accent);">
+                                            <span>Audit & Review Meetings</span> <i class="fas fa-arrow-right"></i>
+                                        </a>
                                     </div>
-                                    <?php ?>
-                                      <a href="dashboard.php?project_id=<?php echo $g['id']; ?>&classroom_id=<?php echo urlencode($viewData['classroom_id']); ?>" class="btn-ui px-4 py-2 text-xs font-semibold hover-overlay-medium transition" style="color: var(--accent); border-color: var(--accent);">
-                                        View Full Report <i class="fas fa-arrow-right ml-1"></i>
-                                    </a>
                                 </div>
                             </div>
                         </div>

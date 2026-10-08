@@ -26,7 +26,7 @@ $viewData['classroom_id'] = $_GET['classroom_id'] ?? null;
     $viewData['isCoordinator'] = ($actualClassroom['created_by'] == $_SESSION['user_id']);
     $viewData['classroomName'] = $actualClassroom['name'] ?? 'Classroom';
     $viewData['inviteCode'] = $actualClassroom['invite_code'] ?? 'XXXXXX';
-    $viewData['maxTeamSize'] = $actualClassroom['max_team_size'] ?? 10;
+    $viewData['maxTeamSize'] = min(4, max(1, (int)($actualClassroom['max_team_size'] ?? 4)));
     $viewData['classroomStartDate'] = $actualClassroom['start_date'] ?? null;
     $viewData['classroomEndDate'] = $actualClassroom['end_date'] ?? null;
     // Fetch the user's role for THIS specific classroom

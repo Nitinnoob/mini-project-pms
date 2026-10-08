@@ -58,9 +58,11 @@ if ($action === 'invite' || $action === 'revoke') {
     }
 
     $maxSize = classroom_get_max_team_size($pdo, $classroom_id);
+    if ($maxSize > 4) { $maxSize = 4; }
+    if ($maxSize < 1) { $maxSize = 1; }
     $activeCount = project_member_active_count($pdo, $project_id);
-    if ($activeCount >= $maxSize) {
-        respond(false, 'This team is already at its maximum size', 409);
+    if ($activeCount >= $maxSize || $activeCount >= 4) {
+        respond(false, 'This team is already at its maximum capacity of 4 members', 409);
     }
 
     project_member_add_request($pdo, $project_id, $target_user_id, 'Invited');
@@ -92,10 +94,12 @@ if ($action === 'invite' || $action === 'revoke') {
 
     // action === 'accept_invite' — re-check capacity at accept time, not just at invite time.
     $maxSize = project_get_classroom_max_team_size($pdo, $project_id);
+    if ($maxSize > 4) { $maxSize = 4; }
+    if ($maxSize < 1) { $maxSize = 1; }
     $activeCount = project_member_active_count($pdo, $project_id);
 
-    if ($activeCount >= $maxSize) {
-        respond(false, 'This team filled up before you could accept', 409);
+    if ($activeCount >= $maxSize || $activeCount >= 4) {
+        respond(false, 'This team filled up before you could accept (maximum 4 members)', 409);
     }
 
     $pdo->beginTransaction();

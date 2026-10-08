@@ -22,8 +22,6 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
     <link rel="stylesheet" href="pms.css">
 </head>
 
@@ -33,8 +31,8 @@
     <div id="toast" class="fixed top-5 left-1/2 transform -translate-x-1/2 z-50 card border-l-4 px-6 py-3 shadow-2xl flex items-center gap-3" style="border-left-color: var(--accent);">
         <i class="fas fa-check-circle text-accent text-xl"></i>
         <div>
-            <h4 class="font-bold text-sm font-head">Task completed</h4>
-            <p class="text-xs text-muted-ui">Weekly progress updated dynamically.</p>
+            <h4 class="font-bold text-sm font-head">Success</h4>
+            <p class="text-xs text-muted-ui">Action completed.</p>
         </div>
     </div>
 

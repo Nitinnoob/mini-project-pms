@@ -23,9 +23,11 @@ if (is_post()) {
                 // Invitation in this classroom all block a new outgoing request.
                 if (!project_member_has_active_or_pending_in_classroom($pdo, $classroom_id, $user_id)) {
                     $maxSize = classroom_get_max_team_size($pdo, $classroom_id);
+                    if ($maxSize > 4) { $maxSize = 4; }
+                    if ($maxSize < 1) { $maxSize = 1; }
                     $activeCount = project_member_active_count($pdo, $project_id);
                     
-                    if ($activeCount < $maxSize) {
+                    if ($activeCount < $maxSize && $activeCount < 4) {
                         project_member_add_request($pdo, $project_id, $user_id, 'Pending');
 
                         notify_project_leaders($pdo, $project_id, 'join_request',

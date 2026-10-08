@@ -95,6 +95,10 @@
                                 <i class="fas fa-times mr-1"></i> Withdraw Request
                             </button>
                         </form>
+                        <?php elseif ((int)$proj['active_members'] >= 4): ?>
+                        <span class="badge badge-muted text-xs py-1 px-2.5">
+                            <i class="fas fa-lock mr-1"></i> Team Full (4/4)
+                        </span>
                         <?php else: ?>
                         <form method="POST" action="request_join.php">
                             <?php echo csrf_field(); ?>

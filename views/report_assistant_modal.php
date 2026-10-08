@@ -12,12 +12,11 @@
         </p>
 
         <a href="download_vtu_template.php?classroom_id=<?php echo urlencode($viewData['classroom_id']); ?>&project_id=<?php echo (int)$viewData['myProjectId']; ?>"
-           class="btn-ui flex items-center justify-center gap-2 w-full py-2 text-sm font-semibold mb-2" style="background: var(--accent); color: var(--bg);">
-            <i class="fas fa-download"></i> Download VTU .docx template
+           class="btn-ui flex items-center justify-center gap-2 w-full py-2.5 text-sm font-semibold mb-2 shadow" style="background: var(--accent); color: var(--bg);">
+            <i class="fas fa-file-word"></i> Download Pre-filled VTU Report (.docx)
         </a>
         <p class="text-xs text-muted-ui mb-5">
-            Includes cover page, certificate, declaration, acknowledgement, abstract, contents / figures / tables lists and the six standard chapters.
-            Your project title, team names, USNs and guide are filled in. Open it in Word and press <span class="font-mono-ui">F9</span> to refresh the contents list.
+            Pre-filled with project metadata, team members &amp; USNs, faculty guide, HOD, <strong>Saturday weekly guide meeting logs</strong>, action directives, attendance summary, and <strong>Continuous Internal Evaluation (CIE) marks</strong>. Includes cover page, certificate, declaration, abstract, TOC, and chapters 1&ndash;6. Open in Word and press <span class="font-mono-ui font-bold">F9</span> to refresh table of contents.
         </p>
 
         <div class="flex justify-between items-center mb-2">

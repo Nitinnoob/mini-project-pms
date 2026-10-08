@@ -1,5 +1,5 @@
 <?php
-// 4. Project groups (Teacher layout) — group-level ledger
+// Project groups (Teacher layout) — group-level ledger
 
 $viewData['projectGroups'] = [];
 
@@ -33,10 +33,12 @@ if ($viewData['actualView'] === 'Teacher' && isset($viewData['classroom_id'])) {
     $stmtMentors->execute([$viewData['classroom_id']]);
     $viewData['availableMentors'] = $stmtMentors->fetchAll(PDO::FETCH_ASSOC);
 
-    // Batch fetch members and task milestone stats across all projects in one go (eliminating N+1 queries)
+    // Batch fetch members, health metrics, and marks across all projects in one go
+    require_once __DIR__ . '/../repositories/meeting_repository.php';
+    require_once __DIR__ . '/../repositories/marks_repository.php';
     $membersByProject = [];
-    $tasksByProject = [];
-    $issuesByProject = [];
+    $healthByProject = [];
+    $marksByProject = [];
 
     if (!empty($realProjects)) {
         $projectIds = array_column($realProjects, 'id');
@@ -53,79 +55,61 @@ if ($viewData['actualView'] === 'Teacher' && isset($viewData['classroom_id'])) {
             $membersByProject[$mRow['project_id']][] = $mRow['username'];
         }
 
-        $weekCol = $viewData['tasksHaveWeekColumn'] ? ', week_number, due_date' : '';
-        $stmtAllTasks = $pdo->prepare("
-            SELECT project_id, status, milestone $weekCol
-            FROM tasks
-            WHERE project_id IN ($placeholders)
-        ");
-        $stmtAllTasks->execute($projectIds);
-        foreach ($stmtAllTasks->fetchAll(PDO::FETCH_ASSOC) as $tRow) {
-            $tasksByProject[$tRow['project_id']][] = $tRow;
-        }
+        // Phase 5 Teacher Ledger Rework: compute health from meetings, attendance, instructions
+        $healthByProject = meeting_compute_projects_health($pdo, $projectIds);
 
-        // Open blockers per project (one query for the whole ledger).
-        try {
-            $stmtIss = $pdo->prepare("SELECT project_id, COUNT(*) AS c FROM issues WHERE project_id IN ($placeholders) AND status = 'open' GROUP BY project_id");
-            $stmtIss->execute($projectIds);
-            foreach ($stmtIss->fetchAll(PDO::FETCH_ASSOC) as $ir) {
-                $issuesByProject[$ir['project_id']] = (int)$ir['c'];
-            }
-        } catch (Throwable $e) {
-            // issues table not on the Phase 5 schema yet
+        // Phase 6 Marks: batch fetch project-level marks & finalization
+        $stmtMarks = $pdo->prepare("
+            SELECT pm.project_id, pm.report_marks, pm.is_finalized, pm.finalized_at, u.username AS finalized_by_name
+            FROM project_marks pm
+            LEFT JOIN users u ON pm.finalized_by = u.id
+            WHERE pm.project_id IN ($placeholders)
+        ");
+        $stmtMarks->execute($projectIds);
+        foreach ($stmtMarks->fetchAll(PDO::FETCH_ASSOC) as $pmRow) {
+            $marksByProject[$pmRow['project_id']] = [
+                'report_marks'      => $pmRow['report_marks'] !== null ? (float)$pmRow['report_marks'] : null,
+                'is_finalized'      => (bool)$pmRow['is_finalized'],
+                'finalized_at'      => $pmRow['finalized_at'],
+                'finalized_by_name' => $pmRow['finalized_by_name'],
+            ];
         }
     }
 
     foreach ($realProjects as $rp) {
         $memNames = $membersByProject[$rp['id']] ?? [];
-        $tasksRaw = $tasksByProject[$rp['id']] ?? [];
-
-        // Phase 4: per-week completion derived from the classroom schedule
-        // instead of the legacy fixed 4-value milestone enum. Weeks with no
-        // tasks stay null so the ledger can distinguish "0%" from "not started".
-        $weekStats = [];
-        foreach ($viewData['phases'] as $p) {
-            $wk = $p['week_number'];
-            $weekTasks = array_filter($tasksRaw, function ($t) use ($wk, $viewData) {
-                $tWeek = $t['week_number'] ?? null;
-                if (empty($tWeek)) {
-                    $tWeek = phase_for_due_date($viewData['classroomStartDate'], $viewData['classroomEndDate'], $t['due_date'] ?? null);
-                }
-                return $tWeek !== null && (int)$tWeek === (int)$wk;
-            });
-
-            $tot = count($weekTasks);
-            $don = count(array_filter($weekTasks, fn($t) => $t['status'] === 'done'));
-            $weekStats[] = [
-                'week_number' => $wk,
-                'label'       => $p['label'],
-                'percent'     => $tot > 0 ? (int)round(($don / $tot) * 100) : null,
-                'is_current'  => $p['is_current'],
-            ];
-        }
-
-        $totOverall = count($tasksRaw);
-        $donOverall = count(array_filter($tasksRaw, fn($t) => $t['status'] === 'done'));
-        $pctOverall = $totOverall > 0 ? (int)round(($donOverall / $totOverall) * 100) : 0;
 
         $viewData['projectGroups'][] = [
-            'id' => $rp['id'],
-            'name' => $rp['name'],
-            'members' => count($memNames),
-            'percent' => $pctOverall,
-            'desc' => $rp['desc'],
+            'id'           => $rp['id'],
+            'name'         => $rp['name'],
+            'members'      => count($memNames),
+            'desc'         => $rp['desc'],
             'member_names' => $memNames,
-            'phase_stats' => $weekStats,
             'has_schedule' => $viewData['hasSchedule'],
-            'mentor_id' => $rp['mentor_id'],
-            'mentor_name' => $rp['mentor_name'],
-            'open_issues' => $issuesByProject[$rp['id']] ?? 0
+            'mentor_id'    => $rp['mentor_id'],
+            'mentor_name'  => $rp['mentor_name'],
+            'marks'        => $marksByProject[$rp['id']] ?? [
+                'report_marks'      => null,
+                'is_finalized'      => false,
+                'finalized_at'      => null,
+                'finalized_by_name' => null,
+            ],
+            'health'       => $healthByProject[$rp['id']] ?? [
+                'status'               => 'neutral',
+                'label'                => 'Pending',
+                'badge_class'          => 'badge-muted',
+                'dot_color'            => 'bg-muted-ui',
+                'meetings_held'        => 0,
+                'meetings_total'       => 0,
+                'meetings_past_unheld' => 0,
+                'attendance_pct'       => 100.0,
+                'open_instructions'    => 0,
+                'reasons'              => ['Pending'],
+            ],
         ];
     }
     
-    // Fetch all students in the classroom. The project lookup is a derived table
-    // limited to THIS classroom's projects so a student who also sits in projects
-    // of other classrooms is never duplicated here.
+    // Fetch all students in the classroom.
     $stmtClassRoster = $pdo->prepare("
         SELECT u.username, cm.usn, cp.project_name
         FROM classroom_members cm

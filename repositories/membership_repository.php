@@ -41,7 +41,8 @@ if (!function_exists('classroom_get_max_team_size')) {
         $stmt = $pdo->prepare("SELECT max_team_size FROM classrooms WHERE id = ?");
         $stmt->execute([$classroomId]);
         $val = $stmt->fetchColumn();
-        return ($val !== false && $val !== null) ? (int)$val : 10;
+        $size = ($val !== false && $val !== null) ? (int)$val : 4;
+        return max(1, min(4, $size));
     }
 }
 
@@ -51,7 +52,8 @@ if (!function_exists('project_get_classroom_max_team_size')) {
         $stmt = $pdo->prepare("SELECT c.max_team_size FROM classrooms c JOIN projects p ON p.classroom_id = c.id WHERE p.id = ?");
         $stmt->execute([$projectId]);
         $val = $stmt->fetchColumn();
-        return ($val !== false && $val !== null) ? (int)$val : 10;
+        $size = ($val !== false && $val !== null) ? (int)$val : 4;
+        return max(1, min(4, $size));
     }
 }
 

@@ -32,8 +32,8 @@ if (is_post()) {
             $pdo->beginTransaction();
             
             $requires_usn = isset($_POST['requires_usn']) ? 1 : 0;
-            $min_size = isset($_POST['min_team_size']) ? max(1, (int)$_POST['min_team_size']) : 1;
-            $max_size = isset($_POST['max_team_size']) ? max($min_size, (int)$_POST['max_team_size']) : 10;
+            $min_size = isset($_POST['min_team_size']) ? max(1, min(4, (int)$_POST['min_team_size'])) : 1;
+            $max_size = isset($_POST['max_team_size']) ? max($min_size, min(4, (int)$_POST['max_team_size'])) : 4;
             
             $chars = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ';
             $charsLen = strlen($chars);
@@ -140,11 +140,11 @@ if (is_post()) {
                 <div class="grid grid-cols-2 gap-4">
                     <div>
                         <label class="block text-sm font-semibold mb-2">Min Team Size</label>
-                        <input type="number" name="min_team_size" class="form-input" value="1" min="1" required>
+                        <input type="number" name="min_team_size" class="form-input" value="1" min="1" max="4" required>
                     </div>
                     <div>
-                        <label class="block text-sm font-semibold mb-2">Max Team Size</label>
-                        <input type="number" name="max_team_size" class="form-input" value="10" min="1" required>
+                        <label class="block text-sm font-semibold mb-2">Max Team Size (Cap: 4)</label>
+                        <input type="number" name="max_team_size" class="form-input" value="4" min="1" max="4" required>
                     </div>
                 </div>
 

@@ -26,11 +26,3 @@ if (!function_exists('project_find_schedule')) {
         return $stmt->fetch(PDO::FETCH_ASSOC) ?: null;
     }
 }
-
-if (!function_exists('activity_log_add')) {
-    function activity_log_add(PDO $pdo, $projectId, $userId, string $action, string $details): void
-    {
-        $stmt = $pdo->prepare("INSERT INTO activity_log (project_id, user_id, action, details) VALUES (?, ?, ?, ?)");
-        $stmt->execute([$projectId, $userId, $action, $details]);
-    }
-}
