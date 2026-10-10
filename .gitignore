@@ -1,0 +1,25 @@
+# Operating System Files
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+.DS_Store
+
+# IDE and Editor Files
+.vscode/
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# Sensitive Environment Configurations (if added in future)
+.env
+.env.local
+
+# User-uploaded files (keep directory structure and security rules)
+uploads/projects/*
+!uploads/projects/.htaccess
+!uploads/projects/.gitkeep
+!uploads/projects/sample_*.png
