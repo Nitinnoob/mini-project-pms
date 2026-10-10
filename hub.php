@@ -215,8 +215,8 @@ include __DIR__ . '/views/header.php';
                                 <?= $isActive ? 'Open Dashboard &rarr;' : 'Switch to this Classroom' ?>
                             </a>
                             <?php if (is_student() && empty($c['my_project_id'])): ?>
-                                <a href="create_project.php?classroom_id=<?= $c['id'] ?>" title="Form Team" class="py-2 px-3 bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-emerald-100 rounded-xl text-xs font-semibold transition-colors whitespace-nowrap">
-                                    + Form Team
+                                <a href="hub.php?select_classroom=<?= $c['id'] ?>" title="Find or start a team" class="py-2 px-3 bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-emerald-100 rounded-xl text-xs font-semibold transition-colors whitespace-nowrap">
+                                    Find a team
                                 </a>
                             <?php endif; ?>
                         </div>

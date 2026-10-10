@@ -47,6 +47,9 @@ CREATE TABLE IF NOT EXISTS projects (
     description TEXT,
     created_by INT NOT NULL,           -- Student team leader
     mentor_id INT NOT NULL,            -- Assigned Teacher Guide
+    status ENUM('forming', 'pending', 'approved', 'rejected') NOT NULL DEFAULT 'forming', -- idea approval state
+    review_note TEXT DEFAULT NULL,     -- Guide's note when asking for changes
+    reviewed_at TIMESTAMP NULL DEFAULT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (classroom_id) REFERENCES classrooms(id) ON DELETE CASCADE,
     FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE RESTRICT,
@@ -176,4 +179,15 @@ CREATE TABLE IF NOT EXISTS marks_changes (
     changed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (project_id) REFERENCES projects(id) ON DELETE CASCADE,
     FOREIGN KEY (changed_by) REFERENCES users(id) ON DELETE RESTRICT
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- 12. Team Join Requests (students ask to join a forming team; the team leader decides)
+CREATE TABLE IF NOT EXISTS team_requests (
+    project_id INT NOT NULL,
+    student_id INT NOT NULL,
+    status ENUM('pending', 'accepted', 'declined') NOT NULL DEFAULT 'pending',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (project_id, student_id),
+    FOREIGN KEY (project_id) REFERENCES projects(id) ON DELETE CASCADE,
+    FOREIGN KEY (student_id) REFERENCES users(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
