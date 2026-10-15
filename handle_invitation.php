@@ -1,6 +1,5 @@
 <?php
 require_once 'bootstrap.php';
-require_once 'notify.php';
 require_once 'repositories/membership_repository.php';
 
 require_login(true);
@@ -24,14 +23,17 @@ $project_id        = !empty($_POST['project_id']) ? (int)$_POST['project_id'] : 
 $target_user_id    = !empty($_POST['user_id']) ? (int)$_POST['user_id'] : null;
 $action            = $_POST['action'] ?? null;
 
-if (!$classroom_id || !$project_id || !$target_user_id) {
+if (!$classroom_id || !$project_id || !$action) {
     respond(false, 'Missing required parameters', 400);
 }
 
 // Confirm the acting user is the leader of this project, and the project lives in this classroom.
-$isLeader = is_project_leader($pdo, $project_id, $_SESSION['user_id'], $classroom_id);
+$isLeader = is_project_leader($pdo, $project_id, (int)$_SESSION['user_id'], $classroom_id);
 
 if ($action === 'invite' || $action === 'revoke') {
+    if (!$target_user_id) {
+        respond(false, 'Missing target user ID', 400);
+    }
     if (!$isLeader) {
         respond(false, 'Only the project leader can manage invitations', 403);
     }
@@ -67,28 +69,18 @@ if ($action === 'invite' || $action === 'revoke') {
 
     project_member_add_request($pdo, $project_id, $target_user_id, 'Invited');
 
-    notify_user($pdo, $target_user_id, 'invite',
-        'You have been invited to join ' . notify_project_name($pdo, $project_id) . '.',
-        'dashboard.php?classroom_id=' . urlencode($classroom_id));
-
     respond(true, 'Invitation sent');
 
 } elseif ($action === 'accept_invite' || $action === 'decline_invite') {
-    // Only the invited student themself may respond to the invitation.
-    if ($target_user_id != (int)$_SESSION['user_id']) {
-        respond(false, 'You can only respond to your own invitation', 403);
-    }
-
-    $myStatus = project_member_get_status($pdo, $project_id, (int)$_SESSION['user_id']);
+    // Only the logged-in student themself may respond to their own invitation.
+    $currentUserId = (int)$_SESSION['user_id'];
+    $myStatus = project_member_get_status($pdo, $project_id, $currentUserId);
     if ($myStatus !== 'Invited') {
         respond(false, 'This invitation is no longer active', 404);
     }
 
     if ($action === 'decline_invite') {
-        project_member_delete_by_status($pdo, $project_id, (int)$_SESSION['user_id'], 'Invited');
-        notify_project_leaders($pdo, $project_id, 'invite_response',
-            htmlspecialchars_decode($_SESSION['username'] ?? 'A classmate') . ' declined your invitation to ' . notify_project_name($pdo, $project_id) . '.',
-            'dashboard.php?classroom_id=' . urlencode($classroom_id), $_SESSION['user_id']);
+        project_member_delete_by_status($pdo, $project_id, $currentUserId, 'Invited');
         respond(true, 'Invitation declined');
     }
 
@@ -120,10 +112,6 @@ if ($action === 'invite' || $action === 'revoke') {
         $pdo->rollBack();
         respond(false, 'Could not accept the invitation. Please try again.', 500);
     }
-
-    notify_project_leaders($pdo, $project_id, 'invite_response',
-        htmlspecialchars_decode($_SESSION['username'] ?? 'A classmate') . ' accepted your invitation and joined ' . notify_project_name($pdo, $project_id) . '.',
-        'dashboard.php?classroom_id=' . urlencode($classroom_id), $_SESSION['user_id']);
 
     respond(true, 'You have joined the project');
 

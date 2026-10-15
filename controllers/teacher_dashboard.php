@@ -1,29 +1,30 @@
 <?php
-// Project groups (Teacher layout) — group-level ledger
+// Teacher dashboard — project groups ledger with meeting health & marks.
 
 $viewData['projectGroups'] = [];
 
 if ($viewData['actualView'] === 'Teacher' && isset($viewData['classroom_id'])) {
     if ($viewData['isCoordinator']) {
         $stmtTGroups = $pdo->prepare("
-            SELECT p.id, p.name, p.description as `desc`, p.mentor_id, u.username as mentor_name 
-            FROM projects p 
+            SELECT p.id, p.name, p.description as `desc`, p.mentor_id, u.username as mentor_name
+            FROM projects p
             LEFT JOIN users u ON p.mentor_id = u.id
             WHERE p.classroom_id = ?
         ");
         $stmtTGroups->execute([$viewData['classroom_id']]);
     } else {
         $stmtTGroups = $pdo->prepare("
-            SELECT p.id, p.name, p.description as `desc`, p.mentor_id, u.username as mentor_name 
-            FROM projects p 
+            SELECT p.id, p.name, p.description as `desc`, p.mentor_id, u.username as mentor_name
+            FROM projects p
             LEFT JOIN users u ON p.mentor_id = u.id
             WHERE p.classroom_id = ? AND p.mentor_id = ?
         ");
         $stmtTGroups->execute([$viewData['classroom_id'], $_SESSION['user_id']]);
     }
-    
+
     $realProjects = $stmtTGroups->fetchAll(PDO::FETCH_ASSOC);
 
+    // Available mentors (Admins in this classroom)
     $stmtMentors = $pdo->prepare("
         SELECT u.id, u.username
         FROM classroom_members cm
@@ -33,9 +34,10 @@ if ($viewData['actualView'] === 'Teacher' && isset($viewData['classroom_id'])) {
     $stmtMentors->execute([$viewData['classroom_id']]);
     $viewData['availableMentors'] = $stmtMentors->fetchAll(PDO::FETCH_ASSOC);
 
-    // Batch fetch members, health metrics, and marks across all projects in one go
+    // Batch fetch data
     require_once __DIR__ . '/../repositories/meeting_repository.php';
     require_once __DIR__ . '/../repositories/marks_repository.php';
+
     $membersByProject = [];
     $healthByProject = [];
     $marksByProject = [];
@@ -44,10 +46,11 @@ if ($viewData['actualView'] === 'Teacher' && isset($viewData['classroom_id'])) {
         $projectIds = array_column($realProjects, 'id');
         $placeholders = implode(',', array_fill(0, count($projectIds), '?'));
 
+        // Members
         $stmtAllMems = $pdo->prepare("
-            SELECT pm.project_id, u.username 
-            FROM project_members pm 
-            JOIN users u ON pm.user_id = u.id 
+            SELECT pm.project_id, u.username
+            FROM project_members pm
+            JOIN users u ON pm.user_id = u.id
             WHERE pm.project_id IN ($placeholders) AND pm.join_status = 'Active'
         ");
         $stmtAllMems->execute($projectIds);
@@ -55,74 +58,80 @@ if ($viewData['actualView'] === 'Teacher' && isset($viewData['classroom_id'])) {
             $membersByProject[$mRow['project_id']][] = $mRow['username'];
         }
 
-        // Phase 5 Teacher Ledger Rework: compute health from meetings, attendance, instructions
+        // Health metrics (meetings count, attendance)
         $healthByProject = meeting_compute_projects_health($pdo, $projectIds);
 
-        // Phase 6 Marks: batch fetch project-level marks & finalization
+        // Marks
+        foreach ($projectIds as $pid) {
+            $marksByProject[$pid] = [
+                'report_marks'       => null,
+                'presentation_marks' => null,
+                'qa_marks'           => null,
+                'total_marks'        => null,
+            ];
+        }
+
         $stmtMarks = $pdo->prepare("
-            SELECT pm.project_id, pm.report_marks, pm.is_finalized, pm.finalized_at, u.username AS finalized_by_name
-            FROM project_marks pm
-            LEFT JOIN users u ON pm.finalized_by = u.id
-            WHERE pm.project_id IN ($placeholders)
+            SELECT project_id, report_marks FROM project_marks WHERE project_id IN ($placeholders)
         ");
         $stmtMarks->execute($projectIds);
         foreach ($stmtMarks->fetchAll(PDO::FETCH_ASSOC) as $pmRow) {
-            $marksByProject[$pmRow['project_id']] = [
-                'report_marks'      => $pmRow['report_marks'] !== null ? (float)$pmRow['report_marks'] : null,
-                'is_finalized'      => (bool)$pmRow['is_finalized'],
-                'finalized_at'      => $pmRow['finalized_at'],
-                'finalized_by_name' => $pmRow['finalized_by_name'],
-            ];
+            $pid = (int)$pmRow['project_id'];
+            if (isset($marksByProject[$pid])) {
+                $marksByProject[$pid]['report_marks'] = $pmRow['report_marks'] !== null ? (float)$pmRow['report_marks'] : null;
+            }
+        }
+
+        $stmtStudentMarks = $pdo->prepare("
+            SELECT project_id,
+                   AVG(presentation_marks) as avg_presentation,
+                   AVG(qa_marks) as avg_qa
+            FROM student_marks
+            WHERE project_id IN ($placeholders)
+            GROUP BY project_id
+        ");
+        $stmtStudentMarks->execute($projectIds);
+        foreach ($stmtStudentMarks->fetchAll(PDO::FETCH_ASSOC) as $smRow) {
+            $pid = (int)$smRow['project_id'];
+            if (isset($marksByProject[$pid])) {
+                $marksByProject[$pid]['presentation_marks'] = $smRow['avg_presentation'] !== null ? round((float)$smRow['avg_presentation'], 1) : null;
+                $marksByProject[$pid]['qa_marks'] = $smRow['avg_qa'] !== null ? round((float)$smRow['avg_qa'], 1) : null;
+
+                $r = $marksByProject[$pid]['report_marks'];
+                $p = $marksByProject[$pid]['presentation_marks'];
+                $q = $marksByProject[$pid]['qa_marks'];
+                if ($r !== null && $p !== null && $q !== null) {
+                    $marksByProject[$pid]['total_marks'] = round($r + $p + $q, 1);
+                }
+            }
         }
     }
 
-    foreach ($realProjects as $rp) {
-        $memNames = $membersByProject[$rp['id']] ?? [];
+    // Build final project groups array
+    foreach ($realProjects as $proj) {
+        $pid = (int)$proj['id'];
+        $health = $healthByProject[$pid] ?? ['meetings_held' => 0, 'avg_attendance_pct' => 0, 'has_shortage' => false];
 
         $viewData['projectGroups'][] = [
-            'id'           => $rp['id'],
-            'name'         => $rp['name'],
-            'members'      => count($memNames),
-            'desc'         => $rp['desc'],
-            'member_names' => $memNames,
-            'has_schedule' => $viewData['hasSchedule'],
-            'mentor_id'    => $rp['mentor_id'],
-            'mentor_name'  => $rp['mentor_name'],
-            'marks'        => $marksByProject[$rp['id']] ?? [
-                'report_marks'      => null,
-                'is_finalized'      => false,
-                'finalized_at'      => null,
-                'finalized_by_name' => null,
-            ],
-            'health'       => $healthByProject[$rp['id']] ?? [
-                'status'               => 'neutral',
-                'label'                => 'Pending',
-                'badge_class'          => 'badge-muted',
-                'dot_color'            => 'bg-muted-ui',
-                'meetings_held'        => 0,
-                'meetings_total'       => 0,
-                'meetings_past_unheld' => 0,
-                'attendance_pct'       => 100.0,
-                'open_instructions'    => 0,
-                'reasons'              => ['Pending'],
-            ],
+            'id'              => $pid,
+            'name'            => $proj['name'],
+            'desc'            => $proj['desc'],
+            'mentor_id'       => $proj['mentor_id'],
+            'mentor_name'     => $proj['mentor_name'],
+            'member_names'    => $membersByProject[$pid] ?? [],
+            'health'          => $health,
+            'marks'           => $marksByProject[$pid] ?? [],
         ];
     }
-    
-    // Fetch all students in the classroom.
-    $stmtClassRoster = $pdo->prepare("
-        SELECT u.username, cm.usn, cp.project_name
+
+    // Classroom roster
+    $stmtRoster = $pdo->prepare("
+        SELECT u.id, u.username, cm.role, cm.usn
         FROM classroom_members cm
         JOIN users u ON cm.user_id = u.id
-        LEFT JOIN (
-            SELECT pm.user_id, p.name AS project_name
-            FROM project_members pm
-            JOIN projects p ON pm.project_id = p.id
-            WHERE pm.join_status = 'Active' AND p.classroom_id = ?
-        ) cp ON cp.user_id = u.id
-        WHERE cm.classroom_id = ? AND cm.role = 'Team Member'
-        ORDER BY u.username ASC
+        WHERE cm.classroom_id = ?
+        ORDER BY cm.role DESC, u.username ASC
     ");
-    $stmtClassRoster->execute([$viewData['classroom_id'], $viewData['classroom_id']]);
-    $viewData['classroomRoster'] = $stmtClassRoster->fetchAll(PDO::FETCH_ASSOC);
+    $stmtRoster->execute([$viewData['classroom_id']]);
+    $viewData['classroomRoster'] = $stmtRoster->fetchAll(PDO::FETCH_ASSOC);
 }

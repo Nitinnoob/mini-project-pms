@@ -9,21 +9,19 @@ if ($viewData['actualView'] === 'Student') {
     require 'views/student.php';
 } elseif ($viewData['actualView'] === 'Marketplace') {
     require 'views/marketplace.php';
-} elseif ($viewData['actualView'] === 'Project Leader') {
-    require 'views/leader.php';
-} else {
+} elseif ($viewData['actualView'] === 'Teacher') {
     require 'views/teacher.php';
+} else {
+    header('Location: hub.php');
+    exit;
 }
 
 echo '</div>';
 
-if (($viewData['actualView'] === 'Student' || $viewData['actualView'] === 'Project Leader')) {
-    require 'views/weekly_log_modal.php';
-    require 'views/report_assistant_modal.php';
-    if (!empty($viewData['isTeacherDrilldown'])) {
-        require 'views/mentor_review_modal.php';
-        require 'views/attendance_modal.php';
-    }
+// Modals available for teacher drilldown
+if ($viewData['actualView'] === 'Student' && !empty($viewData['isTeacherDrilldown'])) {
+    require 'views/meeting_modal.php';
+    require 'views/marks_modal.php';
 }
 
 require 'views/footer.php';

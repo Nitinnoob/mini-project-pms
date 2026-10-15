@@ -7,7 +7,7 @@
                     <h2 class="text-2xl font-head font-semibold">Project Marketplace</h2>
                     <p class="text-muted-ui text-sm mt-1">Browse available projects to join, or start your own team.</p>
                 </div>
-                <a href="create_subproject.php?classroom_id=<?php echo urlencode($viewData['classroom_id']); ?>" class="btn-ui px-4 py-2 text-sm font-semibold hover:opacity-90 transition" style="background: var(--accent-2); color: var(--bg);">
+                <a href="create_subproject.php?classroom_id=<?php echo urlencode((string)$viewData['classroom_id']); ?>" class="btn-ui px-4 py-2 text-sm font-semibold hover:opacity-90 transition" style="background: var(--accent-2); color: var(--bg);">
                     <i class="fas fa-plus mr-1"></i> Start a Project
                 </a>
             </div>
@@ -61,7 +61,7 @@
                 <i class="fas fa-folder-open text-4xl mb-4 text-muted-ui opacity-50"></i>
                 <h3 class="text-lg font-bold mb-2">No projects yet</h3>
                 <p class="text-muted-ui text-sm mb-6 max-w-md mx-auto">It looks like no one has started a project in this classroom yet. Be the first to start a team!</p>
-                <a href="create_subproject.php?classroom_id=<?php echo urlencode($viewData['classroom_id']); ?>" class="btn-ui px-6 py-2 text-sm font-semibold" style="background: var(--accent-2); color: var(--bg);">
+                <a href="create_subproject.php?classroom_id=<?php echo urlencode((string)$viewData['classroom_id']); ?>" class="btn-ui px-6 py-2 text-sm font-semibold" style="background: var(--accent-2); color: var(--bg);">
                     Start a Project
                 </a>
             </div>
@@ -89,7 +89,6 @@
                             <?php echo csrf_field(); ?>
                             <input type="hidden" name="classroom_id" value="<?php echo e($viewData['classroom_id']); ?>">
                             <input type="hidden" name="project_id" value="<?php echo $proj['id']; ?>">
-                            <input type="hidden" name="user_id" value="<?php echo $_SESSION['user_id']; ?>">
                             <input type="hidden" name="action" value="withdraw">
                             <button type="submit" class="btn-ui px-4 py-1.5 text-xs font-semibold hover-overlay-medium transition" style="color: var(--danger); border-color: var(--danger);">
                                 <i class="fas fa-times mr-1"></i> Withdraw Request
@@ -133,7 +132,6 @@
                     var params = {
                         classroom_id: classroomId,
                         project_id: projectId,
-                        user_id: <?php echo (int)$_SESSION['user_id']; ?>,
                         action: inviteAction
                     };
                     if (csrfToken) params.csrf_token = csrfToken;

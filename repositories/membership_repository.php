@@ -94,3 +94,40 @@ if (!function_exists('classroom_member_is_eligible_student')) {
         return (bool)$stmt->fetchColumn();
     }
 }
+
+if (!function_exists('classroom_get_min_team_size')) {
+    function classroom_get_min_team_size(PDO $pdo, int $classroomId): int
+    {
+        $stmt = $pdo->prepare("SELECT min_team_size FROM classrooms WHERE id = ?");
+        $stmt->execute([$classroomId]);
+        $val = $stmt->fetchColumn();
+        if ($val !== false && $val !== null) {
+            return max(1, (int)$val);
+        }
+        $stmtProj = $pdo->prepare("
+            SELECT c.min_team_size
+            FROM classrooms c
+            INNER JOIN projects p ON p.classroom_id = c.id
+            WHERE p.id = ?
+        ");
+        $stmtProj->execute([$classroomId]);
+        $valProj = $stmtProj->fetchColumn();
+        return ($valProj !== false && $valProj !== null) ? max(1, (int)$valProj) : 1;
+    }
+}
+
+if (!function_exists('project_get_classroom_min_team_size')) {
+    function project_get_classroom_min_team_size(PDO $pdo, int $projectId): int
+    {
+        $stmt = $pdo->prepare("
+            SELECT c.min_team_size
+            FROM classrooms c
+            INNER JOIN projects p ON p.classroom_id = c.id
+            WHERE p.id = ?
+        ");
+        $stmt->execute([$projectId]);
+        $val = $stmt->fetchColumn();
+        return ($val !== false && $val !== null) ? max(1, (int)$val) : 1;
+    }
+}
+

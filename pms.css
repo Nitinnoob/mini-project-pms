@@ -172,6 +172,18 @@ body {
     color: var(--danger);
 }
 
+.text-status-green {
+    color: var(--status-green);
+}
+
+.text-status-amber {
+    color: var(--status-amber);
+}
+
+.text-status-red {
+    color: var(--status-red);
+}
+
 .text-muted-ui {
     color: var(--muted);
 }
@@ -194,6 +206,18 @@ body {
 
 .bg-accent-2 {
     background: var(--accent-2);
+}
+
+.bg-status-green {
+    background: var(--status-green);
+}
+
+.bg-status-amber {
+    background: var(--status-amber);
+}
+
+.bg-status-red {
+    background: var(--status-red);
 }
 
 .border-ui {

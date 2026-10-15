@@ -63,7 +63,7 @@ if (is_post()) {
 }
 ?>
 <!DOCTYPE html>
-<html lang="en" data-mode="student">
+<html lang="en" class="dark" data-mode="student">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -71,15 +71,6 @@ if (is_post()) {
     <link rel="stylesheet" href="assets/css/tailwind.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="pms.css">
-    <script>
-        (function () {
-            try {
-                if (localStorage.getItem('pms-theme') === 'dark') {
-                    document.documentElement.classList.add('dark');
-                }
-            } catch (e) {}
-        })();
-    </script>
 </head>
 <body class="min-h-screen flex flex-col">
 
@@ -92,9 +83,6 @@ if (is_post()) {
             <h1 class="font-bold text-xl tracking-tight font-head">PMS</h1>
         </a>
         <div class="flex items-center gap-5 text-sm">
-            <button id="themeToggleBtn" onclick="toggleTheme()" class="theme-toggle-btn" aria-label="Toggle dark mode">
-                <i id="themeToggleIcon" class="fas fa-moon"></i>
-            </button>
             <span class="font-semibold"><?php echo $username; ?></span>
             <div class="h-8 w-8 rounded-full flex items-center justify-center font-bold text-bg bg-accent-2"><?php echo $initial; ?></div>
         </div>
@@ -135,6 +123,5 @@ if (is_post()) {
             </form>
         </div>
     </div>
-    <script src="assets/js/theme.js"></script>
 </body>
 </html>

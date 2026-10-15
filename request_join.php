@@ -1,6 +1,5 @@
 <?php
 require_once 'bootstrap.php';
-require_once 'notify.php';
 require_once 'repositories/membership_repository.php';
 
 require_login();
@@ -29,16 +28,12 @@ if (is_post()) {
                     
                     if ($activeCount < $maxSize && $activeCount < 4) {
                         project_member_add_request($pdo, $project_id, $user_id, 'Pending');
-
-                        notify_project_leaders($pdo, $project_id, 'join_request',
-                            htmlspecialchars_decode($_SESSION['username'] ?? 'A classmate') . ' asked to join ' . notify_project_name($pdo, $project_id) . '.',
-                            'dashboard.php?classroom_id=' . urlencode($classroom_id));
                     }
                 }
             }
         }
         
-        header("Location: dashboard.php?classroom_id=" . urlencode($classroom_id));
+        header("Location: dashboard.php?classroom_id=" . urlencode((string)$classroom_id));
         exit;
     }
 }

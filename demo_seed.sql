@@ -15,20 +15,10 @@ USE pms;
 
 -- 0. Reset (keeps the table structure from schema.sql, clears the data)
 SET FOREIGN_KEY_CHECKS = 0;
-TRUNCATE TABLE marks_changes;
 TRUNCATE TABLE student_marks;
 TRUNCATE TABLE project_marks;
-TRUNCATE TABLE guide_instructions;
-TRUNCATE TABLE attendance_changes;
 TRUNCATE TABLE meeting_attendance;
-TRUNCATE TABLE weekly_meetings;
-TRUNCATE TABLE weekly_attendance;
-TRUNCATE TABLE weekly_reviews;
-TRUNCATE TABLE weekly_submission_files;
-TRUNCATE TABLE weekly_submissions;
-TRUNCATE TABLE notifications;
-TRUNCATE TABLE classroom_phases;
-TRUNCATE TABLE classroom_milestones;
+TRUNCATE TABLE project_meetings;
 TRUNCATE TABLE project_members;
 TRUNCATE TABLE projects;
 TRUNCATE TABLE classroom_members;
@@ -156,8 +146,7 @@ INSERT INTO users (id, username, password, role) VALUES (117, 'S pradeep', '$2y$
 INSERT INTO users (id, username, password, role) VALUES (118, 'Praveen M', '$2y$10$9ms1LzhGBwa99/gyo3oNCu3a3bMxcVd7hJl8UG756xvobdTN4yiJq', NULL);
 INSERT INTO users (id, username, password, role) VALUES (119, 'Praveen R', '$2y$10$9ms1LzhGBwa99/gyo3oNCu3a3bMxcVd7hJl8UG756xvobdTN4yiJq', NULL);
 
--- 4. Create Classroom
-INSERT INTO classrooms (id, name, created_by, invite_code, requires_usn, min_team_size, max_team_size, start_date, end_date) VALUES (1, '5th Semester CS (A & B Section)', 1, 'VTU26X', 1, 3, 5, DATE_SUB(CURDATE(), INTERVAL 10 DAY), DATE_ADD(CURDATE(), INTERVAL 59 DAY));
+INSERT INTO classrooms (id, name, created_by, invite_code, requires_usn, min_team_size, max_team_size) VALUES (1, '5th Semester CS (A & B Section)', 1, 'VTU26X', 1, 3, 4);
 INSERT INTO classroom_members (classroom_id, user_id, role, usn) VALUES (1, 1, 'Admin', NULL);
 
 -- 5. Add Guides and Students to Classroom
@@ -415,123 +404,65 @@ INSERT INTO project_members (project_id, user_id, is_leader, join_status) VALUES
 INSERT INTO project_members (project_id, user_id, is_leader, join_status) VALUES (28, 119, 0, 'Active');
 
 -- ==========================================
--- 7. CURRENT-APP ADDITIONS
--- The classroom started 10 days ago and runs 10 weeks, so the demo is
--- always sitting in Week 2: Literature Survey (Week 1) is done, the
+-- 7. MEETINGS, ATTENDANCE & MARKS SEED DATA
 -- ==========================================
 
--- 7a. Weekly phases (1 phase = 1 week; teacher-facing labels)
-INSERT INTO classroom_phases (classroom_id, week_number, label, merged_into_week) VALUES
-(1, 1,  'Week 1', NULL),
-(1, 2,  'Week 2', NULL),
-(1, 3,  'Week 3', NULL),
-(1, 4,  'Week 4', NULL),
-(1, 5,  'Week 5', NULL),
-(1, 6,  'Week 6', NULL),
-(1, 7,  'Week 7', NULL),
-(1, 8,  'Week 8', NULL),
-(1, 9,  'Week 9', NULL),
-(1, 10, 'Week 10', NULL);
-
--- 7d. Marketplace: CHAITHRA AB is the only classmate without a team.
--- Sameer (Hostel Management System, solo team) has invited her.
+-- 7a. Marketplace: CHAITHRA AB is invited to Hostel Management System
 INSERT INTO project_members (project_id, user_id, is_leader, join_status) VALUES (15, 15, 0, 'Invited');
 
--- 7e. Weekly logs, attachments, mentor reviews and attendance (Week 1)
-INSERT INTO weekly_submissions (id, project_id, week_number, submitted_by, work_summary, next_steps, submitted_at) VALUES
-(1, 1, 1, 16, 'Finalised the synopsis and reviewed 3 base papers on ML-based phishing URL detection. Shortlisted lexical and host-based features.', 'Draft the system architecture and start collecting the URL dataset.', DATE_SUB(NOW(), INTERVAL 4 DAY)),
-(2, 2, 1, 19, 'Read papers on AI shell assistants and wrote the problem statement.', 'Start the architecture diagram.', DATE_SUB(NOW(), INTERVAL 4 DAY)),
-(3, 23, 1, 96, 'Completed literature survey on academic project tracking tools and finalised the synopsis. Identified classroom, team and weekly-log modules.', 'Design the database schema and the Kanban board flow.', DATE_SUB(NOW(), INTERVAL 3 DAY));
+-- 7b. Optional GitHub Repo Links
+UPDATE projects SET github_url = 'https://github.com/vtu-cs/phishing-detection' WHERE id = 1;
+UPDATE projects SET github_url = 'https://github.com/vtu-cs/ai-shell-assistant' WHERE id = 2;
 
--- 7e. Saturday Guide Review Engine: Weekly Meetings, Guide Attendance, Changes & Instructions
-INSERT INTO weekly_meetings (id, project_id, week_number, meeting_date, status, team_update, guide_feedback, submitted_by, submitted_at) VALUES
-(1, 1, 1, DATE_SUB(CURDATE(), INTERVAL 5 DAY), 'held', 'Finalised the synopsis and reviewed 3 base papers on ML-based phishing URL detection. Shortlisted lexical and host-based features.', 'Good start. Compare at least one deep-learning approach against the classical feature-based models.', 16, DATE_SUB(NOW(), INTERVAL 4 DAY)),
-(2, 2, 1, DATE_SUB(CURDATE(), INTERVAL 5 DAY), 'held', 'Read papers on AI shell assistants and wrote the problem statement. Need guidance on sandbox boundaries.', 'Summary is too brief. List the base papers and define execution boundary.', 19, DATE_SUB(NOW(), INTERVAL 4 DAY)),
-(3, 23, 1, DATE_SUB(CURDATE(), INTERVAL 5 DAY), 'held', 'Completed literature survey on academic project tracking tools and finalised the synopsis. Identified classroom, team and weekly-log modules.', 'Approved. Proceed with database schema and wireframes.', 96, DATE_SUB(NOW(), INTERVAL 3 DAY)),
-(4, 1, 2, DATE_ADD(CURDATE(), INTERVAL 2 DAY), 'scheduled', NULL, NULL, NULL, NULL),
-(5, 2, 2, DATE_ADD(CURDATE(), INTERVAL 2 DAY), 'scheduled', NULL, NULL, NULL, NULL),
-(6, 23, 2, DATE_ADD(CURDATE(), INTERVAL 2 DAY), 'scheduled', NULL, NULL, NULL, NULL);
+-- 7c. Project Meetings (On-demand weekly meetings)
+INSERT INTO project_meetings (id, project_id, meeting_date, guidance_notes, created_by) VALUES
+(1, 1, DATE_SUB(CURDATE(), INTERVAL 14 DAY), 'Finalised synopsis. Shortlisted lexical features. Advised comparing with CNN baseline.', 2),
+(2, 1, DATE_SUB(CURDATE(), INTERVAL 7 DAY), 'Architecture approved. Dataset collection underway (target 50k URLs). Next: feature extraction.', 2),
+(3, 2, DATE_SUB(CURDATE(), INTERVAL 12 DAY), 'Problem statement approved. Advised strictly defining sandbox security execution boundary.', 3),
+(4, 2, DATE_SUB(CURDATE(), INTERVAL 5 DAY), 'Reviewed shell command parser. Manjunath was absent; advised reviewing error recovery modules.', 3),
+(5, 23, DATE_SUB(CURDATE(), INTERVAL 6 DAY), 'Synopsis approved. Proceed with database schema and wireframes for project management dashboard.', 14);
 
-INSERT INTO weekly_submission_files (id, meeting_id, submission_id, original_name, stored_name, file_name, file_path, file_size, mime_type) VALUES
-(1, 1, 1, 'Phishing_Detection_Literature_Survey.pdf', 'Phishing_Detection_Literature_Survey.pdf', 'Phishing_Detection_Literature_Survey.pdf', 'uploads/weekly/Phishing_Detection_Literature_Survey.pdf', 245800, 'application/pdf'),
-(2, 3, 3, 'PMS_Synopsis_Week1.pdf', 'PMS_Synopsis_Week1.pdf', 'PMS_Synopsis_Week1.pdf', 'uploads/weekly/PMS_Synopsis_Week1.pdf', 182400, 'application/pdf');
+-- 7d. Meeting Attendance (Present / Absent)
+INSERT INTO meeting_attendance (meeting_id, user_id, status) VALUES
+-- Meeting 1 (Project 1: KEERTHANA 16, ANKITHA 17, ARCHANA 18)
+(1, 16, 'present'),
+(1, 17, 'present'),
+(1, 18, 'present'),
+-- Meeting 2 (Project 1)
+(2, 16, 'present'),
+(2, 17, 'present'),
+(2, 18, 'present'),
+-- Meeting 3 (Project 2: LOKESH 19, MANJUNATH 20, MANYA 21, BHARGAVI 22)
+(3, 19, 'present'),
+(3, 20, 'present'),
+(3, 21, 'present'),
+(3, 22, 'present'),
+-- Meeting 4 (Project 2) - Manjunath (20) absent, Bhargavi (22) absent
+(4, 19, 'present'),
+(4, 20, 'absent'),
+(4, 21, 'present'),
+(4, 22, 'absent'),
+-- Meeting 5 (Project 23: Ranjith 96, Nithin 97, Vinutha 98, Vinaya 99)
+(5, 96, 'present'),
+(5, 97, 'present'),
+(5, 98, 'present'),
+(5, 99, 'present');
 
-INSERT INTO meeting_attendance (meeting_id, user_id, status, marked_by, marked_at) VALUES
-(1, 16, 'present', 2, DATE_SUB(NOW(), INTERVAL 4 DAY)),
-(1, 17, 'present', 2, DATE_SUB(NOW(), INTERVAL 4 DAY)),
-(1, 18, 'present', 2, DATE_SUB(NOW(), INTERVAL 4 DAY)),
-(2, 19, 'present', 3, DATE_SUB(NOW(), INTERVAL 4 DAY)),
-(2, 20, 'present', 3, DATE_SUB(NOW(), INTERVAL 4 DAY)),
-(2, 21, 'present', 3, DATE_SUB(NOW(), INTERVAL 4 DAY)),
-(2, 22, 'excused', 3, DATE_SUB(NOW(), INTERVAL 4 DAY)),
-(3, 96, 'present', 14, DATE_SUB(NOW(), INTERVAL 3 DAY)),
-(3, 97, 'present', 14, DATE_SUB(NOW(), INTERVAL 3 DAY)),
-(3, 98, 'present', 14, DATE_SUB(NOW(), INTERVAL 3 DAY)),
-(3, 99, 'present', 14, DATE_SUB(NOW(), INTERVAL 3 DAY));
+-- 7e. Evaluation Marks (Shared Report /50 + Individual Presentation /25 + Viva /25)
+INSERT INTO project_marks (project_id, report_marks, updated_by) VALUES
+(1, 46.50, 2),
+(2, 42.00, 3);
 
-INSERT INTO attendance_changes (meeting_id, user_id, old_status, new_status, changed_by, reason, changed_at) VALUES
-(2, 22, 'absent', 'excused', 3, 'Submitted medical certificate for university health clinic visit', DATE_SUB(NOW(), INTERVAL 3 DAY));
+-- Individual Student Marks for Project 1 (Guide: Roopa)
+INSERT INTO student_marks (project_id, user_id, presentation_marks, qa_marks, updated_by) VALUES
+(1, 16, 23.50, 24.00, 2),
+(1, 17, 22.00, 23.50, 2),
+(1, 18, 21.50, 22.00, 2);
 
-INSERT INTO guide_instructions (id, meeting_id, text, status, created_by, closed_at) VALUES
-(1, 1, 'Compare Random Forest with a 1D-CNN baseline on the URL dataset', 'open', 2, NULL),
-(2, 1, 'Collect minimum 50,000 legitimate and phishing URL samples', 'acknowledged', 2, NULL),
-(3, 2, 'Define exact sandbox security boundaries for command execution', 'open', 3, NULL),
-(4, 3, 'Prepare entity-relationship diagram for Saturday guide review', 'done', 14, DATE_SUB(NOW(), INTERVAL 1 DAY));
-
-INSERT INTO weekly_reviews (submission_id, reviewed_by, status, mentor_remarks, reviewed_at) VALUES
-(1, 2,    'approved', 'Good start. Compare at least one deep-learning approach against the classical feature-based models.', DATE_SUB(NOW(), INTERVAL 3 DAY)),
-(2, 3,    'revision_needed', 'Summary is too brief. List the base papers you reviewed and the exact scope of the terminal assistant, then resubmit.', DATE_SUB(NOW(), INTERVAL 3 DAY)),
-(3, NULL, 'pending', NULL, DATE_SUB(NOW(), INTERVAL 3 DAY));
-
-INSERT INTO weekly_attendance (submission_id, user_id, present) VALUES
-(1, 16, 1), (1, 17, 1), (1, 18, 1),
-(2, 19, 1), (2, 20, 1), (2, 21, 1), (2, 22, 0),
-(3, 96, 1), (3, 97, 1), (3, 98, 1), (3, 99, 1);
-
--- 7i. Notifications (header bell)
-INSERT INTO notifications (user_id, type, message, link, is_read, created_at) VALUES
--- Coordinator + mentors
-(14, 'weekly_log',   'Ranjith kumar submitted the Week 1 log for Project management system.', 'dashboard.php?classroom_id=1&project_id=23', 0, DATE_SUB(NOW(), INTERVAL 3 DAY)),
-(2,  'weekly_log',   'KEERTHANA submitted the Week 1 log for AI BASED PHISHING DETECTION SYSTEM.', 'dashboard.php?classroom_id=1&project_id=1', 1, DATE_SUB(NOW(), INTERVAL 4 DAY)),
--- Project 1 (approved log)
-(16, 'review',         'Your mentor approved the Week 1 log and left remarks.', 'dashboard.php?classroom_id=1', 0, DATE_SUB(NOW(), INTERVAL 3 DAY)),
-(17, 'review',         'Your mentor approved the Week 1 log and left remarks.', 'dashboard.php?classroom_id=1', 0, DATE_SUB(NOW(), INTERVAL 3 DAY)),
-(18, 'review',         'Your mentor approved the Week 1 log and left remarks.', 'dashboard.php?classroom_id=1', 1, DATE_SUB(NOW(), INTERVAL 3 DAY)),
--- Project 2 (revision needed)
-(19, 'review', 'Your mentor asked for a revision on the Week 1 log.', 'dashboard.php?classroom_id=1', 0, DATE_SUB(NOW(), INTERVAL 3 DAY)),
-(20, 'review', 'Your mentor asked for a revision on the Week 1 log.', 'dashboard.php?classroom_id=1', 0, DATE_SUB(NOW(), INTERVAL 3 DAY)),
-(21, 'review', 'Your mentor asked for a revision on the Week 1 log.', 'dashboard.php?classroom_id=1', 0, DATE_SUB(NOW(), INTERVAL 3 DAY)),
-(22, 'review', 'Your mentor asked for a revision on the Week 1 log.', 'dashboard.php?classroom_id=1', 0, DATE_SUB(NOW(), INTERVAL 3 DAY)),
--- Marketplace invite
-(15, 'invite', 'You have been invited to join Hostel Management System.', 'dashboard.php?classroom_id=1', 0, DATE_SUB(NOW(), INTERVAL 1 DAY));
-
--- 7j. Classroom Milestones (Phase 5)
-INSERT INTO classroom_milestones (classroom_id, title, due_date) VALUES
-(1, 'Synopsis & Problem Statement Approval', DATE_SUB(CURDATE(), INTERVAL 3 DAY)),
-(1, 'Phase 1 Architecture & Design Review', DATE_ADD(CURDATE(), INTERVAL 14 DAY)),
-(1, 'Mid-Term Progress Viva & Code Inspection', DATE_ADD(CURDATE(), INTERVAL 35 DAY)),
-(1, 'Final Demonstration & VTU Report Submission', DATE_ADD(CURDATE(), INTERVAL 56 DAY));
-
--- 7k. Evaluation Marks Sheet (Phase 6)
--- Project 1 (AI Based Phishing Detection): Finalized by Guide (Roopa, user 2)
-INSERT INTO project_marks (project_id, report_marks, is_finalized, finalized_by, finalized_at, updated_by, updated_at) VALUES
-(1, 46.50, 1, 2, DATE_SUB(NOW(), INTERVAL 1 DAY), 2, DATE_SUB(NOW(), INTERVAL 1 DAY)),
-(2, 42.00, 0, NULL, NULL, 3, DATE_SUB(NOW(), INTERVAL 2 DAY));
-
--- Individual Student Marks for Project 1 (Leader: KEERTHANA 16, Members: ANKITHA 17, ARCHANA 18)
-INSERT INTO student_marks (project_id, user_id, presentation_marks, qa_marks, updated_by, updated_at) VALUES
-(1, 16, 23.50, 24.00, 2, DATE_SUB(NOW(), INTERVAL 1 DAY)),
-(1, 17, 22.00, 23.50, 2, DATE_SUB(NOW(), INTERVAL 1 DAY)),
-(1, 18, 21.50, 22.00, 2, DATE_SUB(NOW(), INTERVAL 1 DAY));
-
--- Individual Student Marks for Project 2 (Leader: LOKESH 19, Members: MANJUNATH 20, MANYA 21, BHARGAVI 22)
-INSERT INTO student_marks (project_id, user_id, presentation_marks, qa_marks, updated_by, updated_at) VALUES
-(2, 19, 21.00, 20.50, 3, DATE_SUB(NOW(), INTERVAL 2 DAY)),
-(2, 20, 20.00, 21.00, 3, DATE_SUB(NOW(), INTERVAL 2 DAY)),
-(2, 21, 19.50, 20.00, 3, DATE_SUB(NOW(), INTERVAL 2 DAY)),
-(2, 22, 18.00, 17.50, 3, DATE_SUB(NOW(), INTERVAL 2 DAY));
-
--- Post-finalization adjustment audit log entry
-INSERT INTO marks_changes (project_id, user_id, field_name, old_value, new_value, changed_by, reason, changed_at) VALUES
-(1, 16, 'presentation_marks', '22.50', '23.50', 1, 'Re-evaluated presentation slide delivery after coordinator review', DATE_SUB(NOW(), INTERVAL 12 HOUR));
+-- Individual Student Marks for Project 2 (Guide: Nanda Kumar)
+INSERT INTO student_marks (project_id, user_id, presentation_marks, qa_marks, updated_by) VALUES
+(2, 19, 21.00, 20.50, 3),
+(2, 20, 20.00, 21.00, 3),
+(2, 21, 19.50, 20.00, 3),
+(2, 22, 18.00, 17.50, 3);
 

@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en" data-mode="student">
+<html lang="en" class="dark" data-mode="student">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -8,17 +8,8 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link rel="stylesheet" href="pms.css">
     <link rel="stylesheet" href="assets/css/tailwind.min.css">
-    <script>
-        (function () {
-            try {
-                if (localStorage.getItem('pms-theme') === 'dark') {
-                    document.documentElement.classList.add('dark');
-                }
-            } catch (e) {}
-        })();
-    </script>
+    <link rel="stylesheet" href="pms.css">
 </head>
 <body>
 
@@ -32,10 +23,6 @@
 </script>
 
 <div class="auth-shell">
-    <button id="themeToggleBtn" onclick="toggleTheme()" class="theme-toggle-btn" style="position: absolute; top: 1.5rem; right: 1.5rem; z-index: 50;" aria-label="Toggle dark mode">
-        <i id="themeToggleIcon" class="fas fa-moon"></i>
-    </button>
-    <script src="assets/js/theme.js"></script>
     <div class="auth-brand">
         <div class="ghost-card gc1"></div>
         <div class="ghost-card gc2"></div>
